@@ -1,29 +1,433 @@
-<form id="addPlanForm" class="max-w-md bg-gray-800 p-6 rounded-lg border border-gray-700">
-    <div class="space-y-4">
-        <input type="text" id="pName" placeholder="Plan Name" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white" required>
-        <input type="text" id="pImage" placeholder="Image URL" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white" required>
-        <div class="flex gap-2">
-            <input type="number" id="pPrice" placeholder="Price (₹)" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white" required>
-            <input type="number" id="pIncome" placeholder="Daily (₹)" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white" required>
-        </div>
-        <input type="number" id="pDuration" placeholder="Duration (Days)" class="w-full bg-gray-900 border border-gray-600 p-2 rounded text-white" value="30" required>
-        
-        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded">Publish Plan</button>
-    </div>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Farm Wealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .hide { display: none; }
+        .nav-btn.active { background-color: #374151; color: white; border-right: 4px solid #22c55e; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans antialiased overflow-hidden">
 
-<script>
-    // ... inside your existing script module ...
-    document.getElementById('addPlanForm').addEventListener('submit', async(e) => {
-        e.preventDefault();
-        await addDoc(collection(db, "plans"), {
-            name: document.getElementById('pName').value,
-            image: document.getElementById('pImage').value,
-            price: Number(document.getElementById('pPrice').value),
-            dailyIncome: Number(document.getElementById('pIncome').value),
-            duration: Number(document.getElementById('pDuration').value) // ADDED THIS
+    <div class="flex h-screen">
+        
+        <div class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col hidden md:flex">
+            <div class="p-6 flex items-center gap-3 border-b border-gray-700">
+                <div class="bg-green-600 p-2 rounded-lg"><i class="fas fa-tractor text-white"></i></div>
+                <h1 class="text-xl font-bold text-green-400 tracking-wide">Admin Panel</h1>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="nav-btn active w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-home w-6 text-center"></i> Dashboard
+                </button>
+                <button onclick="switchTab('withdrawals')" id="btn-withdrawals" class="nav-btn w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-money-bill-wave w-6 text-center"></i> Withdrawals
+                </button>
+                <button onclick="switchTab('users')" id="btn-users" class="nav-btn w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-users w-6 text-center"></i> Users
+                </button>
+                <button onclick="switchTab('plans')" id="btn-plans" class="nav-btn w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-seedling w-6 text-center"></i> Plans
+                </button>
+                <button onclick="switchTab('announcements')" id="btn-announcements" class="nav-btn w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-bullhorn w-6 text-center"></i> Announcements
+                </button>
+                <button onclick="switchTab('settings')" id="btn-settings" class="nav-btn w-full text-left px-4 py-3 rounded-r-lg text-gray-400 font-bold flex items-center gap-3 transition hover:bg-gray-700">
+                    <i class="fas fa-cog w-6 text-center"></i> Settings
+                </button>
+            </nav>
+        </div>
+
+        <div class="md:hidden fixed top-0 left-0 w-full bg-gray-800 z-50 p-4 flex justify-between items-center border-b border-gray-700">
+            <div class="font-bold text-green-400">Admin Panel</div>
+            <button onclick="document.querySelector('.w-64').classList.toggle('hidden'); document.querySelector('.w-64').classList.toggle('absolute'); document.querySelector('.w-64').classList.toggle('z-40'); document.querySelector('.w-64').classList.toggle('h-full');" class="text-white"><i class="fas fa-bars"></i></button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 bg-gray-900 relative mt-14 md:mt-0">
+            
+            <div id="tab-dashboard" class="tab-content">
+                <h2 class="text-2xl md:text-3xl font-bold mb-6 flex items-center gap-3">
+                    <span class="bg-blue-500 w-3 h-3 rounded-full animate-pulse"></span> 
+                    Pending Deposits
+                </h2>
+                <div id="depositList" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="tab-withdrawals" class="tab-content hide">
+                <h2 class="text-3xl font-bold mb-6 text-orange-400">Withdrawal Requests</h2>
+                <div id="withdrawList" class="space-y-4"></div>
+            </div>
+
+            <div id="tab-users" class="tab-content hide">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 class="text-3xl font-bold">User Management</h2>
+                    <input type="text" id="searchUser" placeholder="Search email..." class="bg-gray-800 border border-gray-600 px-4 py-2 rounded-lg text-white w-full md:w-64">
+                </div>
+                <div class="bg-gray-800 rounded-xl border border-gray-700 overflow-x-auto shadow-xl">
+                    <table class="w-full text-left text-gray-300 min-w-[600px]">
+                        <thead class="bg-gray-900 uppercase text-xs font-bold text-gray-500">
+                            <tr>
+                                <th class="p-4">User Email</th>
+                                <th class="p-4">Balance</th>
+                                <th class="p-4">Status</th>
+                                <th class="p-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody" class="divide-y divide-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="tab-plans" class="tab-content hide">
+                <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                    <div class="xl:col-span-1">
+                        <h2 class="text-2xl font-bold mb-4 text-green-400">Create New Plan</h2>
+                        <form id="addPlanForm" class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl">
+                            <div class="space-y-4">
+                                <div><label class="text-xs text-gray-400 font-bold uppercase">Plan Name</label><input type="text" id="pName" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none" required></div>
+                                <div><label class="text-xs text-gray-400 font-bold uppercase">Image URL</label><input type="text" id="pImage" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none" required></div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div><label class="text-xs text-gray-400 font-bold uppercase">Price (₹)</label><input type="number" id="pPrice" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none" required></div>
+                                    <div><label class="text-xs text-gray-400 font-bold uppercase">Daily (₹)</label><input type="number" id="pIncome" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none" required></div>
+                                </div>
+                                <div><label class="text-xs text-gray-400 font-bold uppercase">Duration (Days)</label><input type="number" id="pDuration" value="30" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none" required></div>
+                                <div><label class="text-xs text-gray-400 font-bold uppercase">Original Price</label><input type="number" id="pOriginalPrice" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-green-500 outline-none"></div>
+                                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-lg mt-2 transition">PUBLISH PLAN</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="xl:col-span-2">
+                        <h2 class="text-2xl font-bold mb-4 text-white">Active Plans & Stats</h2>
+                        <div id="activePlansList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <p class="text-gray-500">Loading plans...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="tab-announcements" class="tab-content hide">
+                <h2 class="text-3xl font-bold mb-6 text-blue-400">Broadcast Notification</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    
+                    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-xl h-fit">
+                        <h3 class="text-xl font-bold mb-4 text-white">Send to All Users</h3>
+                        <form id="announceForm" class="space-y-4">
+                            <div>
+                                <label class="text-xs text-gray-400 font-bold uppercase">Notification Title</label>
+                                <input type="text" id="annTitle" placeholder="e.g. New Plan Alert!" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-blue-500 outline-none" required>
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-400 font-bold uppercase">Message Content</label>
+                                <textarea id="annMsg" rows="4" placeholder="e.g. We just launched a premium plan. Check it out!" class="w-full bg-gray-900 border border-gray-600 p-3 rounded-lg mt-1 text-white focus:border-blue-500 outline-none" required></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition">
+                                <i class="fas fa-paper-plane mr-2"></i> SEND NOTIFICATION
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <h3 class="text-xl font-bold mb-4 text-white">Recent Broadcasts</h3>
+                        <div id="announcementList" class="space-y-4">
+                            <p class="text-gray-500">Loading history...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-settings" class="tab-content hide">
+                <h2 class="text-3xl font-bold mb-6 text-gray-400">Settings</h2>
+                <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 max-w-md">
+                    <label class="text-xs text-gray-400 font-bold uppercase">Admin UPI ID</label>
+                    <div class="flex gap-2 mt-2">
+                        <input type="text" id="adminUpiInput" class="flex-1 bg-gray-900 border border-gray-600 p-3 rounded-lg outline-none text-yellow-400 font-mono">
+                        <button id="saveUpiBtn" class="bg-blue-600 px-6 py-2 rounded-lg font-bold hover:bg-blue-500">SAVE</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="editUserModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-gray-800 p-8 rounded-xl w-96 border border-gray-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Edit User</h3>
+            <input type="hidden" id="editUid">
+            <label class="text-xs text-gray-400 font-bold">WALLET BALANCE</label>
+            <input type="number" id="editBalance" class="w-full bg-gray-900 border border-gray-500 p-3 rounded-lg mb-6 text-white font-mono text-lg">
+            <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 mb-6">
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="editBan" class="w-5 h-5 accent-red-500">
+                    <label for="editBan" class="text-red-400 font-bold cursor-pointer">BAN USER</label>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('editUserModal').classList.add('hidden')" class="flex-1 bg-gray-700 py-3 rounded-lg font-bold">Cancel</button>
+                <button onclick="saveUserChanges()" class="flex-1 bg-green-600 py-3 rounded-lg font-bold">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="buyersModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-gray-800 rounded-xl w-full max-w-2xl border border-gray-600 shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">Investors: <span id="modalPlanName" class="text-green-400"></span></h3>
+                <button onclick="document.getElementById('buyersModal').classList.add('hidden')" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-0 overflow-y-auto flex-1">
+                <table class="w-full text-left text-gray-300">
+                    <thead class="bg-gray-900 text-xs font-bold text-gray-500 uppercase sticky top-0">
+                        <tr>
+                            <th class="p-4">User ID / Email</th>
+                            <th class="p-4">Purchase Date</th>
+                            <th class="p-4 text-right">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="buyersListBody" class="divide-y divide-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, increment, runTransaction, query, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
+            authDomain: "rupeedesk7.firebaseapp.com",
+            projectId: "rupeedesk7",
+            storageBucket: "rupeedesk7.firebasestorage.app",
+            messagingSenderId: "1013963357851",
+            appId: "1:1013963357851:android:89d07511ca0da5fded503e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- 1. DASHBOARD & WITHDRAWALS ---
+        onSnapshot(collection(db, "deposits"), (snap) => {
+            const list = document.getElementById('depositList');
+            const withdrawList = document.getElementById('withdrawList');
+            list.innerHTML = ""; withdrawList.innerHTML = "";
+
+            snap.forEach(docItem => {
+                const data = docItem.data();
+                const id = docItem.id;
+
+                if(data.status === 'pending' && (data.type === 'deposit' || !data.type)) {
+                    list.innerHTML += `
+                    <div class="bg-gray-800 rounded-xl p-5 border border-gray-700 shadow-lg flex flex-col justify-between">
+                        <div class="flex justify-between items-start mb-3">
+                            <div><h3 class="text-2xl font-bold text-white">₹${data.amount}</h3><p class="text-xs text-gray-400">${data.userEmail}</p></div>
+                            <div class="bg-gray-900 px-2 py-1 rounded text-xs font-mono text-gray-300 border border-gray-700">UTR: ${data.utr}</div>
+                        </div>
+                        <div class="flex gap-3 mt-2">
+                            <button onclick="approveDeposit('${id}', '${data.userId}', ${data.amount})" class="flex-1 bg-green-600 hover:bg-green-500 text-white py-2 rounded font-bold text-xs">APPROVE</button>
+                            <button onclick="rejectTx('${id}')" class="flex-1 bg-red-600 hover:bg-red-500 text-white py-2 rounded font-bold text-xs">REJECT</button>
+                        </div>
+                    </div>`;
+                }
+
+                if(data.status === 'pending' && data.type === 'withdraw') {
+                    const bank = data.bankDetails || {};
+                    withdrawList.innerHTML += `
+                    <div class="bg-gray-800 rounded-xl p-5 border border-orange-900/50 shadow-lg">
+                        <div class="flex justify-between mb-2"><span class="bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded">WITHDRAW</span><span class="text-xl font-bold text-white">₹${data.amount}</span></div>
+                        <div class="bg-gray-900 p-3 rounded border border-gray-700 mb-3 text-sm">
+                            <p class="font-bold text-orange-300">${bank.name || 'N/A'}</p>
+                            <p class="font-mono text-xs text-gray-400">Acc: ${bank.account} | IFSC: ${bank.ifsc}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="approveWithdraw('${id}', '${data.userId}', ${data.amount})" class="flex-1 bg-green-600 py-2 rounded text-xs font-bold">PAID</button>
+                            <button onclick="rejectTx('${id}')" class="flex-1 bg-red-600 py-2 rounded text-xs font-bold">REJECT</button>
+                        </div>
+                    </div>`;
+                }
+            });
         });
-        alert("Plan Created!");
-        e.target.reset();
-    });
-</script>
+
+        window.approveDeposit = async (id, uid, amount) => {
+            try { await runTransaction(db, async (t) => { 
+                const userRef = doc(db, "users", uid); const txRef = doc(db, "deposits", id);
+                t.update(txRef, { status: 'approved' }); t.update(userRef, { balance: increment(amount) });
+            }); } catch(e) { alert(e); }
+        };
+        window.approveWithdraw = async (id, uid, amount) => {
+            if(!confirm(`Confirm Paid ₹${amount}?`)) return;
+            try { await runTransaction(db, async (t) => {
+                const userRef = doc(db, "users", uid); const txRef = doc(db, "deposits", id);
+                const uDoc = await t.get(userRef);
+                if(uDoc.data().balance < amount) throw "Insufficient user balance!";
+                t.update(txRef, { status: 'approved' }); t.update(userRef, { balance: increment(-amount) });
+            }); } catch(e) { alert(e); }
+        };
+        window.rejectTx = async (id) => { if(confirm("Reject?")) await updateDoc(doc(db, "deposits", id), { status: 'rejected' }); };
+
+        // --- 2. USER MANAGEMENT ---
+        onSnapshot(collection(db, "users"), (snap) => {
+            const tbody = document.getElementById('userTableBody');
+            tbody.innerHTML = "";
+            snap.forEach(docSnap => {
+                const u = docSnap.data();
+                tbody.innerHTML += `
+                <tr class="border-b border-gray-800 hover:bg-gray-800">
+                    <td class="p-4 font-bold text-white text-sm">${u.email}<br><span class="text-[10px] text-gray-500">${docSnap.id}</span></td>
+                    <td class="p-4 font-mono text-yellow-400">₹${u.balance?.toFixed(2)||0}</td>
+                    <td class="p-4">${u.banned ? '<span class="text-red-500 font-bold text-xs">BANNED</span>' : '<span class="text-green-500 text-xs">ACTIVE</span>'}</td>
+                    <td class="p-4 text-right"><button onclick="openEditUser('${docSnap.id}', ${u.balance}, ${u.banned||false})" class="bg-gray-700 px-3 py-1 rounded text-xs">Edit</button></td>
+                </tr>`;
+            });
+        });
+
+        window.openEditUser = (uid, bal, banned) => {
+            document.getElementById('editUid').value = uid; document.getElementById('editBalance').value = bal;
+            document.getElementById('editBan').checked = banned; document.getElementById('editUserModal').classList.remove('hidden');
+        };
+        window.saveUserChanges = async () => {
+            await updateDoc(doc(db, "users", document.getElementById('editUid').value), {
+                balance: parseFloat(document.getElementById('editBalance').value), banned: document.getElementById('editBan').checked
+            });
+            document.getElementById('editUserModal').classList.add('hidden');
+        };
+
+        // --- 3. PLANS MANAGER ---
+        onSnapshot(collection(db, "plans"), async (snap) => {
+            const list = document.getElementById('activePlansList');
+            list.innerHTML = "";
+            for (const docSnap of snap.docs) {
+                const p = docSnap.data();
+                const pid = docSnap.id;
+                const q = query(collection(db, "investments"), where("planName", "==", p.name));
+                const investSnap = await getDocs(q);
+                const count = investSnap.size;
+
+                list.innerHTML += `
+                <div class="bg-gray-800 rounded-xl p-4 border border-gray-700 flex gap-4 relative">
+                    <img src="${p.image}" class="w-20 h-20 rounded-lg object-cover bg-gray-900">
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h4 class="font-bold text-white text-lg">${p.name}</h4>
+                            <button onclick="deletePlan('${pid}')" class="text-red-500 hover:text-red-400"><i class="fas fa-trash"></i></button>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">Price: ₹${p.price} | Daily: ₹${p.dailyIncome}</div>
+                        <div class="mt-3 flex items-center justify-between">
+                            <div class="bg-green-900/50 text-green-400 px-2 py-1 rounded text-xs border border-green-800"><i class="fas fa-users mr-1"></i> ${count} Investors</div>
+                            <button onclick="viewBuyers('${p.name}')" class="text-blue-400 text-xs font-bold hover:underline">View Details</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+        });
+
+        document.getElementById('addPlanForm').addEventListener('submit', async(e) => {
+            e.preventDefault();
+            const originalPriceVal = document.getElementById('pOriginalPrice').value;
+            await setDoc(doc(collection(db, "plans")), {
+                name: document.getElementById('pName').value, image: document.getElementById('pImage').value,
+                price: Number(document.getElementById('pPrice').value), dailyIncome: Number(document.getElementById('pIncome').value),
+                duration: Number(document.getElementById('pDuration').value), originalPrice: originalPriceVal ? Number(originalPriceVal) : null
+            });
+            alert("Plan Published!"); e.target.reset();
+        });
+        window.deletePlan = async (id) => { if(confirm("Delete this plan?")) await deleteDoc(doc(db, "plans", id)); };
+
+        // --- 4. VIEW BUYERS ---
+        window.viewBuyers = async (planName) => {
+            const modal = document.getElementById('buyersModal');
+            const listBody = document.getElementById('buyersListBody');
+            document.getElementById('modalPlanName').innerText = planName;
+            listBody.innerHTML = '<tr class="text-center"><td colspan="3" class="p-4 text-gray-500">Loading...</td></tr>';
+            modal.classList.remove('hidden');
+
+            const q = query(collection(db, "investments"), where("planName", "==", planName));
+            const snap = await getDocs(q);
+
+            listBody.innerHTML = "";
+            if(snap.empty) { listBody.innerHTML = '<tr class="text-center"><td colspan="3" class="p-4 text-gray-500">No investors yet.</td></tr>'; return; }
+
+            for (const invDoc of snap.docs) {
+                const data = invDoc.data();
+                let userEmail = "Loading...";
+                try { const userSnap = await getDoc(doc(db, "users", data.userId)); if(userSnap.exists()) userEmail = userSnap.data().email; } catch(e) { userEmail = "Unknown User"; }
+                let dateStr = 'N/A';
+                if (data.startDate && typeof data.startDate.toDate === 'function') { dateStr = data.startDate.toDate().toLocaleDateString(); } 
+                else if (data.startDate) { try { dateStr = new Date(data.startDate).toLocaleDateString(); } catch(e) {} }
+
+                listBody.innerHTML += `
+                <tr class="border-b border-gray-700">
+                    <td class="p-4"><div class="text-white font-bold text-sm">${userEmail}</div><div class="text-xs text-gray-500 font-mono">${data.userId}</div></td>
+                    <td class="p-4 text-gray-300 text-sm">${dateStr}</td>
+                    <td class="p-4 text-right"><span class="text-green-400 text-xs font-bold">ACTIVE</span></td>
+                </tr>`;
+            }
+        };
+
+        // --- 5. ANNOUNCEMENTS (NEW) ---
+        document.getElementById('announceForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('annTitle').value;
+            const msg = document.getElementById('annMsg').value;
+
+            if(!title || !msg) return alert("Fill all fields");
+
+            await setDoc(doc(collection(db, "announcements")), {
+                title: title,
+                message: msg,
+                timestamp: new Date() // Server timestamp usually better, but date obj fine for simple use
+            });
+            alert("Notification Broadcasted!");
+            e.target.reset();
+        });
+
+        onSnapshot(collection(db, "announcements"), (snap) => {
+            const list = document.getElementById('announcementList');
+            list.innerHTML = "";
+            
+            // Sort manually by timestamp desc
+            const docs = [];
+            snap.forEach(d => docs.push({ ...d.data(), id: d.id }));
+            docs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds);
+
+            docs.forEach(d => {
+                 list.innerHTML += `
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 flex justify-between items-start">
+                    <div>
+                        <h4 class="font-bold text-blue-400">${d.title}</h4>
+                        <p class="text-sm text-gray-300 mt-1">${d.message}</p>
+                        <p class="text-xs text-gray-500 mt-2">${new Date(d.timestamp.seconds*1000).toLocaleString()}</p>
+                    </div>
+                    <button onclick="deleteAnnounce('${d.id}')" class="text-gray-500 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                </div>`;
+            });
+        });
+
+        window.deleteAnnounce = async (id) => {
+            if(confirm("Delete this announcement?")) await deleteDoc(doc(db, "announcements", id));
+        }
+
+        // Settings
+        document.getElementById('saveUpiBtn').addEventListener('click', async () => {
+            await setDoc(doc(db, "settings", "admin"), { upiId: document.getElementById('adminUpiInput').value }, { merge: true });
+            alert("UPI Saved");
+        });
+
+        // Tab Switching
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hide'));
+            document.querySelectorAll('.nav-btn').forEach(el => { el.classList.remove('active'); });
+            document.getElementById(`tab-${tab}`).classList.remove('hide');
+            const btn = document.getElementById(`btn-${tab}`);
+            if(btn) { btn.classList.add('active'); }
+        };
+    </script>
+</body>
+</html>

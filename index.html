@@ -2,245 +2,316 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Farm Wealth</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Outfit', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         .hide { display: none !important; }
-        .active-nav { color: #15803d; }
-        .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); }
+        
+        /* Modern Gradients */
+        .bg-gradient-primary { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .bg-gradient-card { background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); }
+        
+        /* Soft Shadows */
+        .shadow-soft { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.08); }
+        .shadow-glow { box-shadow: 0 0 20px rgba(5, 150, 105, 0.2); }
+
+        /* Navigation Active State */
+        .nav-item.active i { color: #059669; transform: translateY(-2px); }
+        .nav-item.active span { color: #059669; font-weight: 800; }
         
         /* Animations */
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-content { animation: slideUp 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .fade-in { animation: fadeIn 0.3s ease-out; }
+        .modal-content { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
         
-        /* Toast Notification */
-        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 80px; font-size: 14px; border-radius: 50px; }
-        #toast.show { visibility: visible; animation: fadeIn 0.5s, fadeOut 0.5s 2.5s; }
+        /* Toast */
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #1f2937; color: #fff; text-align: center; border-radius: 50px; padding: 14px 20px; position: fixed; z-index: 100; left: 50%; bottom: 90px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        #toast.show { visibility: visible; animation: fadeIn 0.3s, fadeOut 0.3s 2.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Notification Badge */
+        .notification-dot { position: absolute; top: 0; right: 0; width: 10px; height: 10px; bg-red-500; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); }
     </style>
 </head>
-<body class="pb-24 max-w-md mx-auto min-h-screen bg-green-50 shadow-2xl overflow-hidden border-x border-gray-200 relative">
+<body class="pb-28 max-w-md mx-auto min-h-screen bg-gray-50 relative">
 
     <div id="toast">Notification message</div>
 
     <div id="view-home" class="view-section">
-        <div class="bg-[#1a4731] p-6 rounded-b-[40px] text-white relative shadow-xl pb-16">
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex items-center gap-2">
-                    <div class="bg-white/10 p-2 rounded-full"><i class="fas fa-tractor text-yellow-400"></i></div>
-                    <span class="font-bold text-lg tracking-wide">Farm Wealth</span>
+        <div class="bg-gradient-primary pt-8 pb-20 px-6 rounded-b-[40px] text-white relative shadow-glow">
+            <div class="flex justify-between items-center mb-8">
+                <div class="flex items-center gap-3">
+                    <div class="bg-white/20 backdrop-blur-md p-2 rounded-full">
+                        <i class="fas fa-leaf text-yellow-300 text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-none">Farm Wealth</h1>
+                        <p class="text-[10px] text-green-200 opacity-80">Grow Together</p>
+                    </div>
                 </div>
-                <i class="fas fa-bell text-xl cursor-pointer"></i>
+                
+                <div onclick="openNotifications()" class="bg-white/20 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition relative">
+                    <i class="fas fa-bell text-sm"></i>
+                    <div id="notifBadge" class="hidden absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border border-white/30"></div>
+                </div>
             </div>
             
-            <div class="text-center mt-2">
-                <p class="text-green-200 text-xs font-medium uppercase tracking-wider mb-1">Total Assets</p>
-                <h1 class="text-5xl font-bold text-white tracking-tighter">₹<span id="userBalance">0.00</span></h1>
+            <div class="text-center mt-4 relative z-10">
+                <p class="text-green-100 text-xs font-semibold uppercase tracking-widest opacity-80 mb-2">Total Assets</p>
+                <h1 class="text-5xl font-extrabold text-white tracking-tight drop-shadow-sm">₹<span id="userBalance">0.00</span></h1>
             </div>
+            
+            <i class="fas fa-chart-line absolute bottom-10 right-10 text-9xl text-white opacity-5 pointer-events-none"></i>
         </div>
 
-        <div class="mx-6 -mt-10 grid grid-cols-2 gap-4 relative z-10">
-            <button onclick="openModal('rechargeModal')" class="bg-white py-3 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-1 active:scale-95 transition">
-                <div class="bg-green-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-plus text-green-700"></i></div>
-                <span class="text-xs font-bold text-gray-700">Deposit</span>
+        <div class="mx-6 -mt-12 grid grid-cols-2 gap-4 relative z-20">
+            <button onclick="openModal('rechargeModal')" class="bg-white py-4 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-2 active:scale-95 transition group">
+                <div class="bg-green-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-green-100 transition">
+                    <i class="fas fa-wallet text-green-600 text-xl"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">Deposit</span>
             </button>
-            <button onclick="openWithdrawModal()" class="bg-white py-3 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-1 active:scale-95 transition">
-                <div class="bg-orange-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-download text-orange-600"></i></div>
-                <span class="text-xs font-bold text-gray-700">Withdraw</span>
+            <button onclick="openWithdrawModal()" class="bg-white py-4 rounded-2xl shadow-soft flex flex-col items-center justify-center gap-2 active:scale-95 transition group">
+                <div class="bg-orange-50 w-12 h-12 rounded-full flex items-center justify-center group-hover:bg-orange-100 transition">
+                    <i class="fas fa-money-bill-transfer text-orange-500 text-xl"></i>
+                </div>
+                <span class="text-xs font-bold text-gray-600">Withdraw</span>
             </button>
         </div>
 
-        <div class="mt-6 px-5 pb-10">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="font-bold text-lg text-gray-800">Investment Plans</h3>
+        <div class="mt-8 px-6">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="font-extrabold text-xl text-gray-800">Investment Plans</h3>
+                <span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">Hot</span>
             </div>
-            <div id="plansList" class="space-y-4">
-                <p class="text-center text-gray-400 text-sm mt-10">Loading plans...</p>
+            <div id="plansList" class="space-y-5 pb-10">
+                <div class="text-center py-10">
+                    <i class="fas fa-circle-notch fa-spin text-green-500"></i>
+                    <p class="text-gray-400 text-xs mt-2">Loading markets...</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="view-invest" class="view-section hide p-5">
-        <h2 class="text-2xl font-bold text-gray-800 mb-4">My Farm</h2>
+    <div id="view-invest" class="view-section hide p-6">
+        <h2 class="text-2xl font-extrabold text-gray-800 mb-6">My Portfolio</h2>
         
-        <div class="bg-gradient-to-r from-green-600 to-green-500 text-white p-5 rounded-2xl shadow-lg mb-6 flex justify-between items-center relative overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white p-6 rounded-3xl shadow-xl mb-8 relative overflow-hidden">
             <div class="relative z-10">
-                <p class="text-xs text-green-100 mb-1">Daily Income Potential</p>
-                <h3 class="text-3xl font-bold">₹<span id="totalDailyIncome">0</span></h3>
+                <div class="flex items-center gap-2 mb-2 opacity-70">
+                    <i class="fas fa-bolt text-yellow-400 text-xs"></i>
+                    <p class="text-xs font-medium uppercase tracking-wider">Daily Earning Power</p>
+                </div>
+                <h3 class="text-4xl font-bold">₹<span id="totalDailyIncome">0</span></h3>
             </div>
-            <i class="fas fa-chart-pie text-6xl text-white opacity-20 absolute -right-2 -bottom-2"></i>
+            <div class="absolute right-0 top-0 w-32 h-32 bg-white opacity-5 rounded-full blur-2xl -mr-10 -mt-10"></div>
         </div>
 
-        <h3 class="font-bold text-gray-700 mb-3">Active Investments</h3>
-        <div id="myInvestmentsList" class="space-y-4 pb-20">
-            <div class="text-center mt-20 opacity-50">
-                <i class="fas fa-seedling text-4xl mb-2 text-gray-400"></i>
-                <p class="text-sm">No active plans yet.</p>
-            </div>
+        <div class="flex justify-between items-end mb-4">
+             <h3 class="font-bold text-gray-700 text-lg">Active Farms</h3>
         </div>
+        
+        <div id="myInvestmentsList" class="space-y-4 pb-20"></div>
     </div>
 
     <div id="view-profile" class="view-section hide">
-        <div class="bg-[#1a4731] p-8 pt-12 text-white text-center rounded-b-[40px] mb-6 shadow-lg relative">
-            <div class="w-20 h-20 bg-green-100 rounded-full mx-auto mb-3 flex items-center justify-center shadow-inner border-4 border-[#2d6a4f]">
-                <i class="fas fa-user text-3xl text-[#1a4731]"></i>
+        <div class="bg-white p-8 pt-12 text-center rounded-b-[40px] mb-6 shadow-soft relative z-10">
+            <div class="w-24 h-24 bg-gradient-to-br from-green-100 to-green-50 rounded-full mx-auto mb-4 flex items-center justify-center shadow-inner p-1">
+                <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" class="w-full h-full object-cover opacity-80">
             </div>
-            <h2 class="text-lg font-bold truncate" id="profileEmail">User</h2>
-            <p class="text-xs text-green-300 mt-1 bg-white/10 inline-block px-3 py-1 rounded-full">ID: <span id="profileId">...</span></p>
+            <h2 class="text-xl font-extrabold text-gray-800" id="profileEmail">User</h2>
+            <div class="inline-flex items-center gap-2 mt-2 px-3 py-1 bg-gray-100 rounded-full">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-xs text-gray-500 font-mono" id="profileId">ID: ...</span>
+            </div>
         </div>
 
-        <div class="px-5 space-y-3">
-            <div onclick="openModal('bankModal')" class="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 cursor-pointer active:bg-gray-50 transition border border-gray-100">
-                <div class="bg-blue-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-university text-blue-600"></i></div>
+        <div class="px-6 space-y-4">
+            <div onclick="openModal('bankModal')" class="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4 cursor-pointer active:scale-[0.98] transition border border-gray-100 group">
+                <div class="bg-blue-50 w-12 h-12 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition">
+                    <i class="fas fa-university text-blue-600 text-lg"></i>
+                </div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-gray-700 text-sm">Bank Account</h4>
-                    <p class="text-[10px] text-gray-500">Bind card for withdrawals</p>
+                    <h4 class="font-bold text-gray-800 text-sm">Bank Details</h4>
+                    <p class="text-[10px] text-gray-400">Manage withdrawal account</p>
                 </div>
                 <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
             </div>
             
-            <div onclick="loadHistory()" class="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 cursor-pointer active:bg-gray-50 transition border border-gray-100">
-                <div class="bg-purple-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-clock text-purple-600"></i></div>
+            <div onclick="loadHistory()" class="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4 cursor-pointer active:scale-[0.98] transition border border-gray-100 group">
+                <div class="bg-purple-50 w-12 h-12 rounded-xl flex items-center justify-center group-hover:bg-purple-100 transition">
+                    <i class="fas fa-history text-purple-600 text-lg"></i>
+                </div>
                 <div class="flex-1">
-                    <h4 class="font-bold text-gray-700 text-sm">Records</h4>
-                    <p class="text-[10px] text-gray-500">Deposit & Withdrawal history</p>
+                    <h4 class="font-bold text-gray-800 text-sm">Transactions</h4>
+                    <p class="text-[10px] text-gray-400">History of money flow</p>
                 </div>
                 <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
             </div>
 
-            <button onclick="logout()" class="w-full mt-6 bg-red-50 text-red-500 font-bold py-3 rounded-xl hover:bg-red-100 transition text-sm">
-                Log Out
+            <a href="https://t.me/+HfSdsTdyiL5kNzdl" target="_blank" class="bg-white p-5 rounded-2xl shadow-sm flex items-center gap-4 cursor-pointer active:scale-[0.98] transition border border-gray-100 group">
+                <div class="bg-sky-50 w-12 h-12 rounded-xl flex items-center justify-center group-hover:bg-sky-100 transition">
+                    <i class="fab fa-telegram-plane text-sky-500 text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-800 text-sm">Customer Support</h4>
+                    <p class="text-[10px] text-gray-400">Join Telegram Channel</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+            </a>
+
+            <button onclick="logout()" class="w-full mt-6 bg-red-50 text-red-500 font-bold py-4 rounded-2xl hover:bg-red-100 transition text-sm flex items-center justify-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
             </button>
         </div>
     </div>
 
-
-    <div id="buyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
-        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content relative">
-            <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-            <div class="flex gap-4 mb-6">
-                <img id="buyImg" src="" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
-                <div>
-                    <h2 id="buyName" class="text-xl font-bold text-gray-800">Plan Name</h2>
-                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">High Yield</span>
+    <div id="notificationModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-6 modal-content h-[75vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="bg-red-50 p-2 rounded-full text-red-500"><i class="fas fa-bell"></i></div>
+                    <h2 class="text-xl font-extrabold text-gray-800">Notifications</h2>
+                </div>
+                <button onclick="closeModal('notificationModal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="notificationList" class="overflow-y-auto flex-1 space-y-3 pr-1">
+                <p class="text-center text-gray-400 mt-10 text-sm">No new notifications.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="buyModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-8 modal-content shadow-2xl">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-8"></div>
+            <div class="flex gap-5 mb-8">
+                <img id="buyImg" src="" class="w-24 h-24 rounded-2xl object-cover shadow-md">
+                <div class="flex flex-col justify-center">
+                    <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md w-fit mb-1">PREMIUM PLAN</span>
+                    <h2 id="buyName" class="text-2xl font-bold text-gray-800 leading-tight">Plan Name</h2>
                 </div>
             </div>
-            <div class="grid grid-cols-3 gap-2 mb-6 text-center">
-                <div class="bg-gray-50 p-3 rounded-xl">
-                    <p class="text-[10px] text-gray-500">Price</p>
-                    <p class="font-bold text-gray-800">₹<span id="buyPrice">0</span></p>
+            <div class="grid grid-cols-3 gap-3 mb-8">
+                <div class="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
+                    <p class="text-[10px] text-gray-400 uppercase font-bold">Invest</p>
+                    <p class="font-bold text-gray-800 text-lg">₹<span id="buyPrice">0</span></p>
                 </div>
-                <div class="bg-gray-50 p-3 rounded-xl">
-                    <p class="text-[10px] text-gray-500">Daily</p>
-                    <p class="font-bold text-green-600">+₹<span id="buyDaily">0</span></p>
+                <div class="bg-green-50 p-3 rounded-2xl text-center border border-green-100">
+                    <p class="text-[10px] text-green-600 uppercase font-bold">Daily</p>
+                    <p class="font-bold text-green-700 text-lg">+₹<span id="buyDaily">0</span></p>
                 </div>
-                <div class="bg-gray-50 p-3 rounded-xl">
-                    <p class="text-[10px] text-gray-500">Days</p>
-                    <p class="font-bold text-gray-800"><span id="buyDays">0</span></p>
+                <div class="bg-gray-50 p-3 rounded-2xl text-center border border-gray-100">
+                    <p class="text-[10px] text-gray-400 uppercase font-bold">Term</p>
+                    <p class="font-bold text-gray-800 text-lg"><span id="buyDays">0</span> <span class="text-xs">Days</span></p>
                 </div>
             </div>
-            <div class="flex justify-between text-sm mb-6 px-2">
-                <span class="text-gray-500">Total Revenue</span>
-                <span class="font-bold text-green-700">₹<span id="buyTotal">0</span></span>
+            <div class="flex justify-between items-center mb-8 bg-gray-50 p-4 rounded-xl">
+                <span class="text-sm text-gray-500 font-medium">Total Returns</span>
+                <span class="font-extrabold text-2xl text-green-600">₹<span id="buyTotal">0</span></span>
             </div>
-            <div class="flex gap-3">
-                <button onclick="closeModal('buyModal')" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">Cancel</button>
-                <button id="confirmBuyBtn" class="flex-1 py-3 rounded-xl font-bold text-white bg-yellow-500 shadow-lg shadow-yellow-200">Confirm</button>
+            <div class="flex gap-4">
+                <button onclick="closeModal('buyModal')" class="flex-1 py-4 rounded-2xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">Cancel</button>
+                <button id="confirmBuyBtn" class="flex-1 py-4 rounded-2xl font-bold text-white bg-black shadow-lg hover:bg-gray-800 transition">Confirm Invest</button>
             </div>
         </div>
     </div>
 
-    <div id="rechargeModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
-        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold">Deposit Funds</h2>
-                <button onclick="closeModal('rechargeModal')"><i class="fas fa-times text-gray-400"></i></button>
+    <div id="rechargeModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-8 modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-extrabold text-gray-800">Add Funds</h2>
+                <button onclick="closeModal('rechargeModal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><i class="fas fa-times"></i></button>
             </div>
-            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-4 flex justify-between items-center">
-                <span class="text-xs font-mono text-gray-600" id="adminUpiDisplay">Loading UPI...</span>
-                <button onclick="copyUpi()" class="text-xs bg-white border px-2 py-1 rounded font-bold text-gray-700">COPY</button>
+            <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-100 mb-6">
+                <p class="text-[10px] text-yellow-600 font-bold uppercase mb-1">Send Payment To UPI</p>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-mono font-bold text-gray-700 truncate mr-2" id="adminUpiDisplay">Loading...</span>
+                    <button onclick="copyUpi()" class="text-xs bg-white border border-yellow-200 px-3 py-1.5 rounded-lg font-bold text-yellow-700 shadow-sm">COPY</button>
+                </div>
             </div>
-            <input type="number" id="amountInput" placeholder="Amount (₹)" class="w-full bg-gray-50 border p-3 rounded-xl mb-3 outline-none focus:border-green-500">
-            <input type="text" id="utrInput" placeholder="12-Digit UTR Number" class="w-full bg-gray-50 border p-3 rounded-xl mb-6 outline-none focus:border-green-500">
-            <button id="submitRechargeBtn" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Submit Payment</button>
+            <input type="number" id="amountInput" placeholder="e.g. 500" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl mb-4 outline-none focus:border-green-500 focus:bg-white transition font-bold text-lg">
+            <input type="text" id="utrInput" placeholder="12-digit transaction ID" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl mb-8 outline-none focus:border-green-500 focus:bg-white transition">
+            <button id="submitRechargeBtn" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-green-200 active:scale-[0.98] transition">Verify & Deposit</button>
         </div>
     </div>
 
-    <div id="withdrawModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
-        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold">Withdraw Funds</h2>
-                <button onclick="closeModal('withdrawModal')"><i class="fas fa-times text-gray-400"></i></button>
+    <div id="withdrawModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-8 modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-extrabold text-gray-800">Withdraw</h2>
+                <button onclick="closeModal('withdrawModal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><i class="fas fa-times"></i></button>
             </div>
-
             <div id="withdrawContent">
-                <p class="text-gray-500 text-sm mb-4">Available Balance: <span class="font-bold text-green-600">₹<span id="withdrawBalDisplay">0</span></span></p>
-                <input type="number" id="withdrawAmount" placeholder="Enter Amount" class="w-full bg-gray-50 border p-3 rounded-xl mb-4 outline-none focus:border-green-500">
-                <button onclick="processWithdraw()" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200">Withdraw Now</button>
-            </div>
-
-            <div id="noBankContent" class="hidden text-center py-4">
-                <div class="bg-red-50 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
-                    <i class="fas fa-university text-red-500 text-2xl"></i>
+                <div class="text-center mb-6">
+                    <p class="text-sm text-gray-400">Available Balance</p>
+                    <h3 class="text-3xl font-extrabold text-gray-800">₹<span id="withdrawBalDisplay">0</span></h3>
                 </div>
-                <p class="text-gray-700 font-bold mb-1">No Bank Account</p>
-                <p class="text-xs text-gray-500 mb-4">Please bind your bank details to withdraw.</p>
-                <button onclick="closeModal('withdrawModal'); openModal('bankModal')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Add Bank Details</button>
+                <input type="number" id="withdrawAmount" placeholder="Enter Amount" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl mb-6 outline-none focus:border-orange-500 focus:bg-white transition font-bold text-center text-xl">
+                <button onclick="processWithdraw()" id="submitWithdrawBtn" class="w-full bg-orange-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-200 active:scale-[0.98] transition">Confirm Withdrawal</button>
+            </div>
+            <div id="noBankContent" class="hidden text-center py-6">
+                <div class="bg-red-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-university text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">No Bank Linked</h3>
+                <p class="text-sm text-gray-500 mb-6 px-6">You need to link a bank account to receive your funds.</p>
+                <button onclick="closeModal('withdrawModal'); openModal('bankModal')" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold">Link Bank Account</button>
             </div>
         </div>
     </div>
 
-    <div id="bankModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
-        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
-            <h2 class="text-lg font-bold mb-4">Bind Bank Card</h2>
-            <form id="bankForm" class="space-y-3">
-                <input type="text" id="bankName" placeholder="Account Holder Name" class="w-full border p-3 rounded-xl bg-gray-50" required>
-                <input type="number" id="bankAcc" placeholder="Account Number" class="w-full border p-3 rounded-xl bg-gray-50" required>
-                <input type="text" id="bankIfsc" placeholder="IFSC Code" class="w-full border p-3 rounded-xl bg-gray-50" required>
-                <div class="flex gap-3 mt-4">
-                    <button type="button" onclick="closeModal('bankModal')" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-500">Cancel</button>
-                    <button type="submit" class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold">Save</button>
+    <div id="bankModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-8 modal-content">
+            <h2 class="text-xl font-extrabold text-gray-800 mb-6">Bank Details</h2>
+            <form id="bankForm" class="space-y-4">
+                <input type="text" id="bankName" placeholder="Account Holder Name" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl outline-none focus:border-blue-500" required>
+                <input type="number" id="bankAcc" placeholder="Account Number" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl outline-none focus:border-blue-500" required>
+                <input type="text" id="bankIfsc" placeholder="IFSC Code" class="w-full bg-gray-50 border border-gray-200 p-4 rounded-2xl outline-none focus:border-blue-500" required>
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-blue-200">Save Details</button>
                 </div>
             </form>
+            <button onclick="closeModal('bankModal')" class="w-full mt-3 text-gray-400 text-sm font-bold py-2">Cancel</button>
         </div>
     </div>
 
-    <div id="historyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
-        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content h-[70vh] flex flex-col">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-bold">Records</h2>
-                <button onclick="closeModal('historyModal')"><i class="fas fa-times text-gray-400"></i></button>
+    <div id="historyModal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-[30px] p-6 modal-content h-[75vh] flex flex-col">
+            <div class="flex justify-between items-center mb-6 px-2">
+                <h2 class="text-xl font-extrabold text-gray-800">History</h2>
+                <button onclick="closeModal('historyModal')" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><i class="fas fa-times"></i></button>
             </div>
-            <div id="historyList" class="overflow-y-auto flex-1 space-y-3">
+            <div id="historyList" class="overflow-y-auto flex-1 space-y-3 pr-2">
                 </div>
         </div>
     </div>
 
-    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-40 pb-4 pt-2 px-6 flex justify-between items-center">
-        <button onclick="switchView('home')" id="nav-home" class="nav-btn flex flex-col items-center active-nav transition">
-            <i class="fas fa-home text-xl mb-1"></i>
-            <span class="text-[10px] font-bold">Home</span>
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-40 pb-6 pt-3 px-8 flex justify-between items-center">
+        <button onclick="switchView('home')" id="nav-home" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition active">
+            <i class="fas fa-home text-xl"></i>
+            <span class="text-[10px] font-semibold">Home</span>
         </button>
-        <div class="relative -top-5">
-            <button onclick="switchView('invest')" id="nav-invest" class="bg-green-600 text-white w-14 h-14 rounded-full shadow-lg shadow-green-200 flex items-center justify-center transform transition active:scale-90">
-                <i class="fas fa-seedling text-2xl"></i>
+        
+        <div class="relative -top-8">
+            <button onclick="switchView('invest')" id="nav-invest" class="bg-black text-white w-16 h-16 rounded-full shadow-lg shadow-gray-400 flex items-center justify-center transform transition active:scale-90 hover:scale-105 border-4 border-gray-50">
+                <i class="fas fa-plus text-2xl"></i>
             </button>
         </div>
-        <button onclick="switchView('profile')" id="nav-profile" class="nav-btn flex flex-col items-center text-gray-400 transition">
-            <i class="fas fa-user text-xl mb-1"></i>
-            <span class="text-[10px] font-bold">Profile</span>
+        
+        <button onclick="switchView('profile')" id="nav-profile" class="nav-item flex flex-col items-center gap-1 text-gray-400 transition">
+            <i class="fas fa-user text-xl"></i>
+            <span class="text-[10px] font-semibold">Profile</span>
         </button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc, runTransaction, query, where, orderBy, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc, runTransaction, query, where, orderBy, setDoc, updateDoc, increment, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
@@ -258,7 +329,6 @@
         let currentBalance = 0;
         let userBankDetails = null;
 
-        // --- AUTH ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -267,6 +337,7 @@
                 loadMyInvestments(user.uid);
                 loadAdminUpi();
                 checkBankDetails(user.uid);
+                loadNotifications(user.uid); 
             } else {
                 window.location.href = "login.html";
             }
@@ -283,14 +354,12 @@
             });
         }
 
-        // --- CHECK BANK DETAILS ---
         function checkBankDetails(uid) {
             onSnapshot(doc(db, "bank_details", uid), (doc) => {
                 userBankDetails = doc.exists() ? doc.data() : null;
             });
         }
 
-        // --- MARKET PLANS ---
         function loadPlans() {
             onSnapshot(collection(db, "plans"), (snap) => {
                 const list = document.getElementById('plansList');
@@ -299,17 +368,17 @@
                     const p = doc.data();
                     const duration = p.duration || 30;
                     list.innerHTML += `
-                    <div class="bg-white rounded-2xl p-4 card-shadow flex gap-4 items-center">
-                        <img src="${p.image}" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-800">${p.name}</h4>
-                            <div class="flex items-center gap-2 mt-1 mb-2">
-                                <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">${duration} Days</span>
-                                <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded font-bold">Daily ₹${p.dailyIncome}</span>
+                    <div class="bg-gradient-card p-5 rounded-3xl shadow-soft border border-white flex gap-5 items-center relative overflow-hidden">
+                        <img src="${p.image}" class="w-20 h-20 rounded-2xl object-cover shadow-md bg-gray-100">
+                        <div class="flex-1 z-10">
+                            <div class="flex justify-between items-start">
+                                <h4 class="font-extrabold text-gray-800 text-lg leading-tight mb-1">${p.name}</h4>
+                                <span class="text-[10px] font-bold bg-green-50 text-green-700 px-2 py-1 rounded-md">Daily ₹${p.dailyIncome}</span>
                             </div>
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-xl text-gray-800">₹${p.price}</span>
-                                <button onclick="openBuyModal('${doc.id}', ${p.price}, '${p.name}', ${p.dailyIncome}, '${p.image}', ${duration})" class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-yellow-200 active:scale-95 transition">Invest</button>
+                            <p class="text-xs text-gray-400 font-medium mb-3">${duration} Days Cycle</p>
+                            <div class="flex justify-between items-end">
+                                <span class="font-extrabold text-2xl text-gray-900">₹${p.price}</span>
+                                <button onclick="openBuyModal('${doc.id}', ${p.price}, '${p.name}', ${p.dailyIncome}, '${p.image}', ${duration})" class="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-gray-800 transition transform active:scale-95">Invest</button>
                             </div>
                         </div>
                     </div>`;
@@ -317,7 +386,6 @@
             });
         }
 
-        // --- BUY MODAL LOGIC ---
         let selectedPlan = null;
         window.openBuyModal = (id, price, name, daily, img, days) => {
             selectedPlan = { id, price, name, daily, img, days };
@@ -330,23 +398,29 @@
             document.getElementById('buyModal').classList.remove('hidden');
         };
 
-        document.getElementById('confirmBuyBtn').addEventListener('click', async () => {
+        // BUY BUTTON LOGIC WITH LOADING STATE
+        document.getElementById('confirmBuyBtn').addEventListener('click', async function() {
             if(currentBalance < selectedPlan.price) {
                 showToast("Insufficient Balance");
                 closeModal('buyModal');
                 openModal('rechargeModal');
                 return;
             }
+            
+            // Loading State
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+            btn.disabled = true;
 
             const userRef = doc(db, "users", currentUser.uid);
             const invRef = doc(collection(db, "investments"));
-
+            
             try {
                 await runTransaction(db, async (t) => {
                     const uDoc = await t.get(userRef);
                     const newBal = uDoc.data().balance - selectedPlan.price;
                     if(newBal < 0) throw "Low Balance";
-
                     t.update(userRef, { balance: newBal });
                     t.set(invRef, {
                         userId: currentUser.uid,
@@ -355,66 +429,65 @@
                         dailyIncome: selectedPlan.daily,
                         duration: selectedPlan.days,
                         startDate: new Date(),
-                        nextClaim: new Date().getTime() + 86400000, // 24 Hours from now
+                        nextClaim: new Date().getTime() + 86400000,
                         status: 'active'
                     });
                 });
                 showToast("Investment Successful!");
                 closeModal('buyModal');
                 switchView('invest');
-            } catch (e) {
-                showToast("Error: " + e);
+            } catch (e) { 
+                showToast("Error: " + e); 
+            } finally {
+                // Reset Button
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         });
 
-        // --- TIMER FUNCTION ---
         function formatTimeLeft(ms) {
             if(ms <= 0) return null;
+            if (isNaN(ms)) return "Calculating..."; 
             const h = Math.floor(ms / (1000 * 60 * 60));
             const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
             return `${h}h ${m}m`;
         }
 
-        // --- MY INVESTMENTS & CLAIM LOGIC (WITH TIMER) ---
         function loadMyInvestments(uid) {
             const q = query(collection(db, "investments"), where("userId", "==", uid), where("status", "==", "active"));
-            
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('myInvestmentsList');
                 let totalDaily = 0;
                 list.innerHTML = "";
-                
                 if(snap.empty) {
-                    list.innerHTML = '<div class="text-center mt-10 text-gray-400">No active investments</div>';
+                    list.innerHTML = '<div class="text-center mt-12 text-gray-300"><i class="fas fa-seedling text-5xl mb-3"></i><p class="text-sm font-medium">Start your journey</p></div>';
                     return;
                 }
-
                 snap.forEach(docItem => {
                     const data = docItem.data();
                     totalDaily += data.dailyIncome;
                     const now = new Date().getTime();
-                    const timeLeft = data.nextClaim - now;
+                    const nextClaimTime = typeof data.nextClaim === 'number' ? data.nextClaim : now;
+                    const timeLeft = nextClaimTime - now;
                     
-                    // Determine Button State
                     let btnHtml = "";
                     if (timeLeft <= 0) {
-                        // Ready to Claim
-                        btnHtml = `<button onclick="claimIncome('${docItem.id}', ${data.dailyIncome})" class="w-full mt-2 bg-green-600 text-white py-2 rounded text-sm font-bold shadow-lg animate-pulse">Claim ₹${data.dailyIncome}</button>`;
+                        btnHtml = `<button onclick="claimIncome('${docItem.id}', ${data.dailyIncome})" class="w-full mt-4 bg-green-600 text-white py-3 rounded-xl text-sm font-bold shadow-lg shadow-green-200 animate-pulse transition hover:bg-green-700">Claim ₹${data.dailyIncome}</button>`;
                     } else {
-                        // Countdown
                         const timeStr = formatTimeLeft(timeLeft);
-                        btnHtml = `<button class="w-full mt-2 bg-gray-100 text-gray-400 py-2 rounded text-sm font-bold cursor-not-allowed border">Wait ${timeStr}</button>`;
+                        btnHtml = `<button class="w-full mt-4 bg-gray-100 text-gray-400 py-3 rounded-xl text-sm font-bold cursor-not-allowed border border-gray-200 flex items-center justify-center gap-2"><i class="far fa-clock"></i> Wait ${timeStr}</button>`;
                     }
 
                     list.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
-                        <div class="flex justify-between items-center">
+                    <div class="bg-white p-5 rounded-3xl shadow-soft border border-gray-50 flex flex-col relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+                        <div class="flex justify-between items-center pl-3">
                             <div>
-                                <h4 class="font-bold text-gray-800">${data.planName}</h4>
-                                <p class="text-[10px] text-gray-500">Invested: ₹${data.price}</p>
+                                <h4 class="font-extrabold text-gray-800 text-lg">${data.planName}</h4>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">Invested: ₹${data.price}</p>
                             </div>
                             <div class="text-right">
-                                <span class="text-green-600 font-bold">+₹${data.dailyIncome}</span>
+                                <span class="text-green-600 font-extrabold text-xl">+₹${data.dailyIncome}</span>
                                 <p class="text-[10px] text-gray-400">Daily Return</p>
                             </div>
                         </div>
@@ -423,28 +496,82 @@
                 });
                 document.getElementById('totalDailyIncome').innerText = totalDaily;
             });
-            
-            // Refresh UI every minute to update timers
-            setInterval(() => {
-                // This is a simple hack to trigger the snapshot listener again or just reload UI
-                // For better performance, update DOM directly, but this works for small apps
-            }, 60000);
         }
 
         window.claimIncome = async (invId, amount) => {
             const invRef = doc(db, "investments", invId);
             const userRef = doc(db, "users", currentUser.uid);
-            
             try {
                 await runTransaction(db, async (t) => {
                     t.update(userRef, { balance: increment(amount) });
                     t.update(invRef, { nextClaim: new Date().getTime() + 86400000 }); 
                 });
-                showToast(`Claimed ₹${amount} successfully!`);
+                showToast(`Collected ₹${amount}!`);
             } catch(e) { console.log(e); }
         };
 
-        // --- BANK & HISTORY ---
+        window.openNotifications = () => {
+            openModal('notificationModal');
+            document.getElementById('notifBadge').classList.add('hidden');
+        }
+
+        function loadNotifications(uid) {
+            const qDeposits = query(collection(db, "deposits"), where("userId", "==", uid));
+            const qAnnounce = query(collection(db, "announcements"));
+
+            const renderNotifs = (docs) => {
+                const list = document.getElementById('notificationList');
+                list.innerHTML = "";
+                if(docs.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-400 mt-10 text-sm">No new notifications.</p>';
+                    return;
+                }
+                document.getElementById('notifBadge').classList.remove('hidden');
+                docs.forEach(n => {
+                    const icon = n.type === 'announcement' ? 'fa-bullhorn text-blue-500 bg-blue-50' : (n.status === 'approved' ? 'fa-check text-green-500 bg-green-50' : 'fa-times text-red-500 bg-red-50');
+                    list.innerHTML += `
+                    <div class="bg-gray-50 p-4 rounded-2xl flex items-start gap-3 border border-gray-100">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${icon.split(' ').slice(1).join(' ')}">
+                            <i class="fas ${icon.split(' ')[0]}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-800 text-sm">${n.title}</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">${n.message}</p>
+                            <p class="text-[10px] text-gray-400 mt-2">${n.date}</p>
+                        </div>
+                    </div>`;
+                });
+            };
+
+            const refresh = async () => {
+                const depSnap = await getDocs(qDeposits);
+                const annSnap = await getDocs(qAnnounce);
+                let notifs = [];
+                depSnap.forEach(d => {
+                    const data = d.data();
+                    if(data.status !== 'pending') {
+                        const title = data.type === 'withdraw' ? 'Withdrawal Update' : 'Deposit Update';
+                        const msg = `Your ${data.type} of ₹${data.amount} was ${data.status}.`;
+                        notifs.push({
+                            title: title, message: msg, date: new Date(data.timestamp.seconds*1000).toLocaleDateString(),
+                            timestamp: data.timestamp.seconds, type: 'system', status: data.status
+                        });
+                    }
+                });
+                annSnap.forEach(d => {
+                    const data = d.data();
+                    notifs.push({
+                        title: data.title, message: data.message, date: new Date(data.timestamp.seconds*1000).toLocaleDateString(),
+                        timestamp: data.timestamp.seconds, type: 'announcement'
+                    });
+                });
+                notifs.sort((a, b) => b.timestamp - a.timestamp);
+                renderNotifs(notifs);
+            };
+            onSnapshot(qDeposits, refresh);
+            onSnapshot(qAnnounce, refresh);
+        }
+
         document.getElementById('bankForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             await setDoc(doc(db, "bank_details", currentUser.uid), {
@@ -456,33 +583,32 @@
             closeModal('bankModal');
         });
 
-        // --- FIX FOR RECORDS ERROR (CLIENT SIDE SORTING) ---
         window.loadHistory = () => {
-            // REMOVED 'orderBy' from query to fix "failed-precondition" error
             const q = query(collection(db, "deposits"), where("userId", "==", currentUser.uid));
-            
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('historyList');
                 list.innerHTML = "";
-                
-                // Get data and sort manually in JS
                 const docs = [];
                 snap.forEach(d => docs.push({ ...d.data(), id: d.id }));
-                docs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Newest first
+                docs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); 
 
-                if(docs.length === 0) list.innerHTML = "<p class='text-center text-gray-400 mt-10'>No records found</p>";
-                
+                if(docs.length === 0) list.innerHTML = "<p class='text-center text-gray-400 mt-20 text-sm'>No transaction history.</p>";
                 docs.forEach(d => {
-                    const color = d.status === 'approved' ? 'text-green-600' : (d.status === 'pending' ? 'text-yellow-600' : 'text-red-600');
+                    const color = d.status === 'approved' ? 'text-green-600 bg-green-50' : (d.status === 'pending' ? 'text-yellow-600 bg-yellow-50' : 'text-red-600 bg-red-50');
+                    const icon = d.type === 'withdraw' ? 'fa-arrow-up text-orange-400' : 'fa-arrow-down text-green-500';
+                    
                     list.innerHTML += `
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
-                        <div>
-                            <p class="font-bold text-gray-700 text-sm">Deposit</p>
-                            <p class="text-[10px] text-gray-400">${new Date(d.timestamp.seconds*1000).toLocaleDateString()}</p>
+                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-xs"><i class="fas ${icon}"></i></div>
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm capitalize">${d.type || 'Deposit'}</p>
+                                <p class="text-[10px] text-gray-400 font-medium">${new Date(d.timestamp.seconds*1000).toLocaleDateString()}</p>
+                            </div>
                         </div>
                         <div class="text-right">
                             <p class="font-bold text-gray-800">₹${d.amount}</p>
-                            <p class="text-xs ${color} capitalize font-bold">${d.status}</p>
+                            <span class="text-[10px] font-bold px-2 py-1 rounded-md uppercase ${color}">${d.status}</span>
                         </div>
                     </div>`;
                 });
@@ -490,10 +616,8 @@
             });
         };
 
-        // --- WITHDRAWAL LOGIC (NEW) ---
         window.openWithdrawModal = () => {
             document.getElementById('withdrawBalDisplay').innerText = currentBalance.toFixed(2);
-            
             if (userBankDetails) {
                 document.getElementById('withdrawContent').classList.remove('hidden');
                 document.getElementById('noBankContent').classList.add('hidden');
@@ -504,50 +628,43 @@
             openModal('withdrawModal');
         };
 
+        // WITHDRAW LOGIC WITH LOADING STATE
         window.processWithdraw = async () => {
             const amt = parseFloat(document.getElementById('withdrawAmount').value);
             if(!amt || amt <= 0) return showToast("Invalid Amount");
             if(amt > currentBalance) return showToast("Insufficient Balance");
-
-            // Create Withdraw Request
-            await addDoc(collection(db, "deposits"), {
-                userId: currentUser.uid,
-                type: 'withdraw', // Mark as withdraw
-                amount: amt,
-                status: 'pending',
-                timestamp: new Date(),
-                bankDetails: userBankDetails
-            });
             
-            // Deduct Balance Immediately (Optional, usually better to wait for admin, but showing logic here)
-            // For now, we just show request sent. 
-            showToast("Withdrawal Request Sent!");
-            closeModal('withdrawModal');
+            // Loading State
+            const btn = document.getElementById('submitWithdrawBtn'); // Need ID here
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "deposits"), {
+                    userId: currentUser.uid, type: 'withdraw', amount: amt, status: 'pending', timestamp: new Date(), bankDetails: userBankDetails
+                });
+                showToast("Withdrawal Requested!");
+                closeModal('withdrawModal');
+            } catch(e) {
+                showToast("Error: " + e);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         };
 
-        // --- UTILS (Navigation, Modals, Toast) ---
         window.switchView = (view) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hide'));
             document.getElementById(`view-${view}`).classList.remove('hide');
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'text-green-700'));
-            if(view !== 'invest') document.getElementById(`nav-${view}`).classList.add('active-nav', 'text-green-700');
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            if(view === 'home') document.getElementById('nav-home').classList.add('active');
+            if(view === 'profile') document.getElementById('nav-profile').classList.add('active');
         };
-        
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-        
-        window.copyUpi = () => { 
-            navigator.clipboard.writeText(document.getElementById('adminUpiDisplay').innerText); 
-            showToast("UPI Copied!"); 
-        };
-        
-        window.showToast = (msg) => {
-            const x = document.getElementById("toast");
-            x.innerText = msg;
-            x.className = "show";
-            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
-        };
-        
+        window.copyUpi = () => { navigator.clipboard.writeText(document.getElementById('adminUpiDisplay').innerText); showToast("UPI Copied!"); };
+        window.showToast = (msg) => { const x = document.getElementById("toast"); x.innerText = msg; x.className = "show"; setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000); };
         window.logout = () => signOut(auth);
         
         async function loadAdminUpi() {
@@ -555,25 +672,32 @@
             if(d.exists()) document.getElementById('adminUpiDisplay').innerText = d.data().upiId;
         }
         
-        // Deposit Logic
-        document.getElementById('submitRechargeBtn').addEventListener('click', async () => {
+        // DEPOSIT LOGIC WITH LOADING STATE
+        document.getElementById('submitRechargeBtn').addEventListener('click', async function() {
             const amt = parseFloat(document.getElementById('amountInput').value);
             const utr = document.getElementById('utrInput').value;
-            if(!amt || !utr) return showToast("Please fill all fields");
             
-            await addDoc(collection(db, "deposits"), {
-                userId: currentUser.uid,
-                userEmail: currentUser.email,
-                amount: amt,
-                utr: utr,
-                status: 'pending',
-                type: 'deposit',
-                timestamp: new Date()
-            });
-            showToast("Deposit Submitted!");
-            closeModal('rechargeModal');
-        });
+            if(!amt || !utr) return showToast("Fill all fields");
+            
+            // Loading State
+            const btn = this;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Verifying...';
+            btn.disabled = true;
 
+            try {
+                await addDoc(collection(db, "deposits"), {
+                    userId: currentUser.uid, userEmail: currentUser.email, amount: amt, utr: utr, status: 'pending', type: 'deposit', timestamp: new Date()
+                });
+                showToast("Deposit Submitted!");
+                closeModal('rechargeModal');
+            } catch(e) {
+                showToast("Error submitting");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
     </script>
 </body>
 </html>

@@ -2,35 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Farm Wealth</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Welcome - Farm Wealth</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Background Animation */
+        .bg-animated {
+            background: linear-gradient(-45deg, #064e3b, #059669, #047857, #065f46);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        /* Toast Notification */
+        #toast { visibility: hidden; min-width: 280px; margin-left: -140px; background-color: #333; color: #fff; text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 50px; font-size: 14px; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 80px; }
+        #toast.error { background-color: #ef4444; }
+        #toast.success { background-color: #22c55e; }
+
+        /* Smooth Input Transition */
+        input:focus { box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2); border-color: #10b981; }
+    </style>
 </head>
-<body class="bg-green-50 min-h-screen flex items-center justify-center">
+<body class="bg-animated min-h-screen flex flex-col items-center justify-center p-6 text-gray-800">
 
-    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-green-700">Farm Wealth</h1>
-            <p class="text-gray-500">Grow your fortune today</p>
+    <div id="toast">Message Here</div>
+
+    <div class="w-full max-w-sm bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden">
+        
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-green-600"></div>
+
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner text-2xl">
+                <i class="fas fa-tractor text-green-600"></i>
+            </div>
+            <h1 class="text-2xl font-extrabold text-gray-900 tracking-tight">Farm Wealth</h1>
+            <p class="text-sm text-gray-500 mt-1">Cultivate your financial future</p>
         </div>
 
-        <div class="flex mb-6 border-b">
-            <button id="tab-login" class="flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold" onclick="switchTab('login')">Login</button>
-            <button id="tab-register" class="flex-1 py-2 text-gray-500" onclick="switchTab('register')">Register</button>
+        <div class="flex bg-gray-100 rounded-xl p-1 mb-8 relative">
+            <div id="tab-indicator" class="absolute top-1 left-1 w-[calc(50%-4px)] h-[calc(100%-8px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-out"></div>
+            <button id="btn-login" onclick="switchTab('login')" class="flex-1 relative z-10 py-3 text-sm font-bold text-gray-800 text-center transition-colors">Login</button>
+            <button id="btn-register" onclick="switchTab('register')" class="flex-1 relative z-10 py-3 text-sm font-bold text-gray-400 text-center transition-colors">Register</button>
         </div>
 
-        <form id="loginForm" class="space-y-4">
-            <input type="email" id="loginEmail" placeholder="Email Address" class="w-full p-3 border rounded bg-gray-50" required>
-            <input type="password" id="loginPass" placeholder="Password" class="w-full p-3 border rounded bg-gray-50" required>
-            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">LOGIN</button>
+        <form id="loginForm" class="space-y-5">
+            <div class="relative">
+                <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="email" id="loginEmail" placeholder="Email Address" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-sm transition-all" required>
+            </div>
+            <div class="relative">
+                <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="password" id="loginPass" placeholder="Password" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-sm transition-all" required>
+            </div>
+            
+            <div class="text-right">
+                <a href="#" onclick="showToast('Contact Admin to reset', 'error')" class="text-xs text-green-600 font-bold hover:underline">Forgot Password?</a>
+            </div>
+
+            <button type="submit" id="loginBtn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-200 active:scale-[0.98] transition-transform flex items-center justify-center gap-2">
+                <span>LOGIN</span>
+                <i class="fas fa-arrow-right text-sm"></i>
+            </button>
         </form>
 
-        <form id="registerForm" class="hidden space-y-4">
-            <input type="email" id="regEmail" placeholder="Email Address" class="w-full p-3 border rounded bg-gray-50" required>
-            <input type="password" id="regPass" placeholder="Password" class="w-full p-3 border rounded bg-gray-50" required>
-            <input type="text" id="referralCode" placeholder="Referral Code (Optional)" class="w-full p-3 border rounded bg-gray-50">
-            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">CREATE ACCOUNT</button>
+        <form id="registerForm" class="hidden space-y-5 animate-fade">
+            <div class="relative">
+                <i class="fas fa-envelope absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="email" id="regEmail" placeholder="Email Address" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-sm transition-all" required>
+            </div>
+            <div class="relative">
+                <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="password" id="regPass" placeholder="Create Password" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-sm transition-all" required>
+            </div>
+            <div class="relative">
+                <i class="fas fa-user-tag absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="referralCode" placeholder="Referral Code (Optional)" class="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-sm transition-all">
+            </div>
+            
+            <button type="submit" id="regBtn" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-green-200 active:scale-[0.98] transition-transform">
+                CREATE ACCOUNT
+            </button>
         </form>
+
+        <p class="text-center text-xs text-gray-400 mt-8">
+            By continuing, you agree to our <span class="text-gray-600 underline cursor-pointer">Terms</span>
+        </p>
     </div>
 
     <script type="module">
@@ -38,7 +99,7 @@
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-        // YOUR CONFIG
+        // YOUR FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
             authDomain: "rupeedesk7.firebaseapp.com",
@@ -52,9 +113,69 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // Register Logic
+        // --- UI HELPERS ---
+        window.showToast = (msg, type = 'normal') => {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.className = "show"; // Reset class
+            if(type === 'error') t.classList.add('error');
+            if(type === 'success') t.classList.add('success');
+            
+            setTimeout(() => { t.className = ""; }, 3000);
+        };
+
+        window.switchTab = (tab) => {
+            const indicator = document.getElementById('tab-indicator');
+            const btnLogin = document.getElementById('btn-login');
+            const btnReg = document.getElementById('btn-register');
+            const formLogin = document.getElementById('loginForm');
+            const formReg = document.getElementById('registerForm');
+
+            if(tab === 'login') {
+                indicator.style.transform = 'translateX(0%)';
+                btnLogin.classList.replace('text-gray-400', 'text-gray-800');
+                btnReg.classList.replace('text-gray-800', 'text-gray-400');
+                formLogin.classList.remove('hidden');
+                formReg.classList.add('hidden');
+            } else {
+                indicator.style.transform = 'translateX(100%)';
+                btnReg.classList.replace('text-gray-400', 'text-gray-800');
+                btnLogin.classList.replace('text-gray-800', 'text-gray-400');
+                formReg.classList.remove('hidden');
+                formLogin.classList.add('hidden');
+            }
+        };
+
+        // --- LOGIN LOGIC ---
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+            btn.disabled = true;
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showToast("Welcome back!", "success");
+                setTimeout(() => window.location.href = "index.html", 1000);
+            } catch (error) {
+                showToast(parseError(error.code), "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- REGISTER LOGIC ---
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('regBtn');
+            const originalText = btn.innerText;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Creating...';
+            btn.disabled = true;
+
             const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPass').value;
             const refCode = document.getElementById('referralCode').value;
@@ -63,49 +184,30 @@
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 const user = userCredential.user;
                 
-                // Create User Doc in Firestore
                 await setDoc(doc(db, "users", user.uid), {
                     email: email,
-                    balance: 0, // Start with 0
-                    referralCode: user.uid.substring(0, 6).toUpperCase(), // Simple unique code
+                    balance: 0,
+                    referralCode: user.uid.substring(0, 6).toUpperCase(),
                     referredBy: refCode || null,
                     createdAt: new Date()
                 });
 
-                alert("Account Created! Please Login.");
-                window.location.reload();
+                showToast("Account Created Successfully!", "success");
+                setTimeout(() => window.location.reload(), 1500); // Reload to auto-login logic or switch tab
             } catch (error) {
-                alert(error.message);
+                showToast(parseError(error.code), "error");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         });
 
-        // Login Logic
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPass').value;
-
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                window.location.href = "index.html";
-            } catch (error) {
-                alert("Login failed: " + error.message);
-            }
-        });
-
-        // Tab Switcher
-        window.switchTab = (tab) => {
-            if(tab === 'login') {
-                document.getElementById('loginForm').classList.remove('hidden');
-                document.getElementById('registerForm').classList.add('hidden');
-                document.getElementById('tab-login').className = "flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold";
-                document.getElementById('tab-register').className = "flex-1 py-2 text-gray-500";
-            } else {
-                document.getElementById('loginForm').classList.add('hidden');
-                document.getElementById('registerForm').classList.remove('hidden');
-                document.getElementById('tab-login').className = "flex-1 py-2 text-gray-500";
-                document.getElementById('tab-register').className = "flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold";
-            }
+        // Friendly Error Messages
+        function parseError(code) {
+            if(code === 'auth/user-not-found') return "Account not found";
+            if(code === 'auth/wrong-password') return "Invalid password";
+            if(code === 'auth/email-already-in-use') return "Email already registered";
+            if(code === 'auth/weak-password') return "Password too weak (min 6 chars)";
+            return "Authentication failed";
         }
     </script>
 </body>
