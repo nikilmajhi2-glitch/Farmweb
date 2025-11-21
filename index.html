@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Wealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; -webkit-tap-highlight-color: transparent; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .hide { display: none !important; }
+        .active-nav { color: #15803d; }
+        .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); }
+        
+        /* Smooth Modal Animation */
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-content { animation: slideUp 0.3s ease-out; }
+    </style>
+</head>
+<body class="pb-24 max-w-md mx-auto min-h-screen bg-green-50 shadow-2xl overflow-hidden border-x border-gray-200 relative">
+
+    <div id="view-home" class="view-section">
+        <div class="bg-[#1a4731] p-6 rounded-b-[40px] text-white relative shadow-xl pb-16">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-2">
+                    <div class="bg-white/10 p-2 rounded-full"><i class="fas fa-tractor text-yellow-400"></i></div>
+                    <span class="font-bold text-lg tracking-wide">Farm Wealth</span>
+                </div>
+                <i class="fas fa-bell text-xl cursor-pointer"></i>
+            </div>
+            
+            <div class="text-center mt-2">
+                <p class="text-green-200 text-xs font-medium uppercase tracking-wider mb-1">Total Assets</p>
+                <h1 class="text-5xl font-bold text-white tracking-tighter">₹<span id="userBalance">0.00</span></h1>
+            </div>
+        </div>
+
+        <div class="mx-6 -mt-10 grid grid-cols-2 gap-4 relative z-10">
+            <button onclick="openModal('rechargeModal')" class="bg-white py-3 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+                <div class="bg-green-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-plus text-green-700"></i></div>
+                <span class="text-xs font-bold text-gray-700">Deposit</span>
+            </button>
+            <button onclick="openWithdrawModal()" class="bg-white py-3 rounded-2xl shadow-lg flex flex-col items-center justify-center gap-1 active:scale-95 transition">
+                <div class="bg-orange-100 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-download text-orange-600"></i></div>
+                <span class="text-xs font-bold text-gray-700">Withdraw</span>
+            </button>
+        </div>
+
+        <div class="mt-6 px-5 pb-10">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-gray-800">Investment Plans</h3>
+            </div>
+            <div id="plansList" class="space-y-4">
+                <p class="text-center text-gray-400 text-sm mt-10">Loading plans...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-invest" class="view-section hide p-5">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">My Farm</h2>
+        
+        <div class="bg-gradient-to-r from-green-600 to-green-500 text-white p-5 rounded-2xl shadow-lg mb-6 flex justify-between items-center relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-xs text-green-100 mb-1">Daily Income Potential</p>
+                <h3 class="text-3xl font-bold">₹<span id="totalDailyIncome">0</span></h3>
+            </div>
+            <i class="fas fa-chart-pie text-6xl text-white opacity-20 absolute -right-2 -bottom-2"></i>
+        </div>
+
+        <h3 class="font-bold text-gray-700 mb-3">Active Investments</h3>
+        <div id="myInvestmentsList" class="space-y-4 pb-20">
+            <div class="text-center mt-20 opacity-50">
+                <i class="fas fa-seedling text-4xl mb-2 text-gray-400"></i>
+                <p class="text-sm">No active plans yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-profile" class="view-section hide">
+        <div class="bg-[#1a4731] p-8 pt-12 text-white text-center rounded-b-[40px] mb-6 shadow-lg relative">
+            <div class="w-20 h-20 bg-green-100 rounded-full mx-auto mb-3 flex items-center justify-center shadow-inner border-4 border-[#2d6a4f]">
+                <i class="fas fa-user text-3xl text-[#1a4731]"></i>
+            </div>
+            <h2 class="text-lg font-bold truncate" id="profileEmail">User</h2>
+            <p class="text-xs text-green-300 mt-1 bg-white/10 inline-block px-3 py-1 rounded-full">ID: <span id="profileId">...</span></p>
+        </div>
+
+        <div class="px-5 space-y-3">
+            <div onclick="openModal('bankModal')" class="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 cursor-pointer active:bg-gray-50 transition border border-gray-100">
+                <div class="bg-blue-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-university text-blue-600"></i></div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-700 text-sm">Bank Account</h4>
+                    <p class="text-[10px] text-gray-500">Bind card for withdrawals</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+            </div>
+            
+            <div onclick="loadHistory()" class="bg-white p-4 rounded-xl shadow-sm flex items-center gap-4 cursor-pointer active:bg-gray-50 transition border border-gray-100">
+                <div class="bg-purple-50 w-10 h-10 rounded-full flex items-center justify-center"><i class="fas fa-clock text-purple-600"></i></div>
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-700 text-sm">Records</h4>
+                    <p class="text-[10px] text-gray-500">Deposit & Withdrawal history</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+            </div>
+
+            <button onclick="logout()" class="w-full mt-6 bg-red-50 text-red-500 font-bold py-3 rounded-xl hover:bg-red-100 transition text-sm">
+                Log Out
+            </button>
+        </div>
+    </div>
+
+
+    <div id="buyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content relative">
+            <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex gap-4 mb-6">
+                <img id="buyImg" src="" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
+                <div>
+                    <h2 id="buyName" class="text-xl font-bold text-gray-800">Plan Name</h2>
+                    <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">High Yield</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 mb-6 text-center">
+                <div class="bg-gray-50 p-3 rounded-xl">
+                    <p class="text-[10px] text-gray-500">Price</p>
+                    <p class="font-bold text-gray-800">₹<span id="buyPrice">0</span></p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl">
+                    <p class="text-[10px] text-gray-500">Daily</p>
+                    <p class="font-bold text-green-600">+₹<span id="buyDaily">0</span></p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded-xl">
+                    <p class="text-[10px] text-gray-500">Days</p>
+                    <p class="font-bold text-gray-800"><span id="buyDays">0</span></p>
+                </div>
+            </div>
+
+            <div class="flex justify-between text-sm mb-6 px-2">
+                <span class="text-gray-500">Total Revenue</span>
+                <span class="font-bold text-green-700">₹<span id="buyTotal">0</span></span>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('buyModal')" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">Cancel</button>
+                <button id="confirmBuyBtn" class="flex-1 py-3 rounded-xl font-bold text-white bg-yellow-500 shadow-lg shadow-yellow-200">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rechargeModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Deposit Funds</h2>
+                <button onclick="closeModal('rechargeModal')"><i class="fas fa-times text-gray-400"></i></button>
+            </div>
+            <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100 mb-4 flex justify-between items-center">
+                <span class="text-xs font-mono text-gray-600" id="adminUpiDisplay">Loading UPI...</span>
+                <button onclick="copyUpi()" class="text-xs bg-white border px-2 py-1 rounded font-bold text-gray-700">COPY</button>
+            </div>
+            <input type="number" id="amountInput" placeholder="Amount (₹)" class="w-full bg-gray-50 border p-3 rounded-xl mb-3 outline-none focus:border-green-500">
+            <input type="text" id="utrInput" placeholder="12-Digit UTR Number" class="w-full bg-gray-50 border p-3 rounded-xl mb-6 outline-none focus:border-green-500">
+            <button id="submitRechargeBtn" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Submit Payment</button>
+        </div>
+    </div>
+
+    <div id="bankModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
+            <h2 class="text-lg font-bold mb-4">Bind Bank Card</h2>
+            <form id="bankForm" class="space-y-3">
+                <input type="text" id="bankName" placeholder="Account Holder Name" class="w-full border p-3 rounded-xl bg-gray-50" required>
+                <input type="number" id="bankAcc" placeholder="Account Number" class="w-full border p-3 rounded-xl bg-gray-50" required>
+                <input type="text" id="bankIfsc" placeholder="IFSC Code" class="w-full border p-3 rounded-xl bg-gray-50" required>
+                <div class="flex gap-3 mt-4">
+                    <button type="button" onclick="closeModal('bankModal')" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-500">Cancel</button>
+                    <button type="submit" class="flex-1 py-3 bg-green-600 text-white rounded-xl font-bold">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="historyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content h-[70vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Records</h2>
+                <button onclick="closeModal('historyModal')"><i class="fas fa-times text-gray-400"></i></button>
+            </div>
+            <div id="historyList" class="overflow-y-auto flex-1 space-y-3">
+                </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 max-w-md mx-auto z-40 pb-4 pt-2 px-6 flex justify-between items-center">
+        <button onclick="switchView('home')" id="nav-home" class="nav-btn flex flex-col items-center active-nav transition">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">Home</span>
+        </button>
+        <div class="relative -top-5">
+            <button onclick="switchView('invest')" id="nav-invest" class="bg-green-600 text-white w-14 h-14 rounded-full shadow-lg shadow-green-200 flex items-center justify-center transform transition active:scale-90">
+                <i class="fas fa-seedling text-2xl"></i>
+            </button>
+        </div>
+        <button onclick="switchView('profile')" id="nav-profile" class="nav-btn flex flex-col items-center text-gray-400 transition">
+            <i class="fas fa-user text-xl mb-1"></i>
+            <span class="text-[10px] font-bold">Profile</span>
+        </button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc, runTransaction, query, where, orderBy, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
+            authDomain: "rupeedesk7.firebaseapp.com",
+            projectId: "rupeedesk7",
+            storageBucket: "rupeedesk7.firebasestorage.app",
+            messagingSenderId: "1013963357851",
+            appId: "1:1013963357851:android:89d07511ca0da5fded503e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        let currentUser = null;
+        let currentBalance = 0;
+
+        // --- AUTH ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                loadUserData(user.uid);
+                loadPlans();
+                loadMyInvestments(user.uid);
+                loadAdminUpi();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        function loadUserData(uid) {
+            onSnapshot(doc(db, "users", uid), (doc) => {
+                if (doc.exists()) {
+                    currentBalance = doc.data().balance;
+                    document.getElementById('userBalance').innerText = currentBalance.toFixed(2);
+                    document.getElementById('profileEmail').innerText = doc.data().email;
+                    document.getElementById('profileId').innerText = uid.substring(0,6).toUpperCase();
+                }
+            });
+        }
+
+        // --- MARKET PLANS ---
+        function loadPlans() {
+            onSnapshot(collection(db, "plans"), (snap) => {
+                const list = document.getElementById('plansList');
+                list.innerHTML = "";
+                snap.forEach(doc => {
+                    const p = doc.data();
+                    const duration = p.duration || 30; // Default to 30 days if not set
+                    list.innerHTML += `
+                    <div class="bg-white rounded-2xl p-4 card-shadow flex gap-4 items-center">
+                        <img src="${p.image}" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800">${p.name}</h4>
+                            <div class="flex items-center gap-2 mt-1 mb-2">
+                                <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500">${duration} Days</span>
+                                <span class="text-xs bg-green-50 text-green-700 px-2 py-1 rounded font-bold">Daily ₹${p.dailyIncome}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-xl text-gray-800">₹${p.price}</span>
+                                <button onclick="openBuyModal('${doc.id}', ${p.price}, '${p.name}', ${p.dailyIncome}, '${p.image}', ${duration})" class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-md shadow-yellow-200 active:scale-95 transition">Invest</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        // --- BUY MODAL LOGIC ---
+        let selectedPlan = null;
+        window.openBuyModal = (id, price, name, daily, img, days) => {
+            selectedPlan = { id, price, name, daily, img, days };
+            document.getElementById('buyImg').src = img;
+            document.getElementById('buyName').innerText = name;
+            document.getElementById('buyPrice').innerText = price;
+            document.getElementById('buyDaily').innerText = daily;
+            document.getElementById('buyDays').innerText = days;
+            document.getElementById('buyTotal').innerText = daily * days;
+            document.getElementById('buyModal').classList.remove('hidden');
+        };
+
+        document.getElementById('confirmBuyBtn').addEventListener('click', async () => {
+            if(currentBalance < selectedPlan.price) {
+                alert("Insufficient Balance. Please Deposit.");
+                closeModal('buyModal');
+                openModal('rechargeModal');
+                return;
+            }
+
+            const userRef = doc(db, "users", currentUser.uid);
+            const invRef = doc(collection(db, "investments"));
+
+            try {
+                await runTransaction(db, async (t) => {
+                    const uDoc = await t.get(userRef);
+                    const newBal = uDoc.data().balance - selectedPlan.price;
+                    if(newBal < 0) throw "Low Balance";
+
+                    t.update(userRef, { balance: newBal });
+                    t.set(invRef, {
+                        userId: currentUser.uid,
+                        planName: selectedPlan.name,
+                        price: selectedPlan.price,
+                        dailyIncome: selectedPlan.daily,
+                        duration: selectedPlan.days,
+                        startDate: new Date(),
+                        nextClaim: new Date().getTime() + 86400000, // Claim available after 24 hours
+                        status: 'active'
+                    });
+                });
+                alert("Investment Successful!");
+                closeModal('buyModal');
+                switchView('invest');
+            } catch (e) {
+                alert("Error: " + e);
+            }
+        });
+
+        // --- MY INVESTMENTS & CLAIM LOGIC ---
+        function loadMyInvestments(uid) {
+            const q = query(collection(db, "investments"), where("userId", "==", uid), where("status", "==", "active"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('myInvestmentsList');
+                let totalDaily = 0;
+                list.innerHTML = "";
+                
+                if(snap.empty) {
+                    list.innerHTML = '<div class="text-center mt-10 text-gray-400">No active investments</div>';
+                    return;
+                }
+
+                snap.forEach(docItem => {
+                    const data = docItem.data();
+                    totalDaily += data.dailyIncome;
+                    const now = new Date().getTime();
+                    const canClaim = now >= data.nextClaim;
+
+                    let btnHtml = canClaim 
+                        ? `<button onclick="claimIncome('${docItem.id}', ${data.dailyIncome})" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold shadow-lg shadow-green-200 animate-pulse">Claim ₹${data.dailyIncome}</button>`
+                        : `<button class="bg-gray-200 text-gray-400 px-3 py-1 rounded text-xs font-bold cursor-not-allowed">Wait 24h</button>`;
+
+                    list.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-800">${data.planName}</h4>
+                            <p class="text-[10px] text-gray-500">Invested: ₹${data.price}</p>
+                        </div>
+                        <div class="flex flex-col items-end gap-1">
+                            ${btnHtml}
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('totalDailyIncome').innerText = totalDaily;
+            });
+        }
+
+        window.claimIncome = async (invId, amount) => {
+            const invRef = doc(db, "investments", invId);
+            const userRef = doc(db, "users", currentUser.uid);
+            
+            try {
+                await runTransaction(db, async (t) => {
+                    t.update(userRef, { balance: increment(amount) });
+                    t.update(invRef, { nextClaim: new Date().getTime() + 86400000 }); // Reset timer 24h
+                });
+                // Removed alert for smoother experience, button just changes to gray
+            } catch(e) { console.log(e); }
+        };
+
+        // --- BANK & HISTORY ---
+        document.getElementById('bankForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await setDoc(doc(db, "bank_details", currentUser.uid), {
+                name: document.getElementById('bankName').value,
+                account: document.getElementById('bankAcc').value,
+                ifsc: document.getElementById('bankIfsc').value
+            });
+            alert("Bank Details Saved!");
+            closeModal('bankModal');
+        });
+
+        window.loadHistory = () => {
+            const q = query(collection(db, "deposits"), where("userId", "==", currentUser.uid), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('historyList');
+                list.innerHTML = "";
+                if(snap.empty) list.innerHTML = "<p class='text-center text-gray-400'>No records found</p>";
+                
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const color = d.status === 'approved' ? 'text-green-600' : (d.status === 'pending' ? 'text-yellow-600' : 'text-red-600');
+                    list.innerHTML += `
+                    <div class="flex justify-between items-center border-b pb-2">
+                        <div>
+                            <p class="font-bold text-gray-700">Deposit</p>
+                            <p class="text-[10px] text-gray-400">${new Date(d.timestamp.seconds*1000).toLocaleDateString()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold">₹${d.amount}</p>
+                            <p class="text-xs ${color} capitalize">${d.status}</p>
+                        </div>
+                    </div>`;
+                });
+                openModal('historyModal');
+            });
+        };
+
+        // --- UTILS (Navigation & Modals) ---
+        window.switchView = (view) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hide'));
+            document.getElementById(`view-${view}`).classList.remove('hide');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'text-green-700'));
+            if(view !== 'invest') document.getElementById(`nav-${view}`).classList.add('active-nav', 'text-green-700');
+        };
+        
+        // Re-using previous helper functions
+        import { increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"; // Import increment here
+        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        window.copyUpi = () => { navigator.clipboard.writeText(document.getElementById('adminUpiDisplay').innerText); alert("Copied"); };
+        window.logout = () => signOut(auth);
+        
+        async function loadAdminUpi() {
+            const d = await getDoc(doc(db, "settings", "admin"));
+            if(d.exists()) document.getElementById('adminUpiDisplay').innerText = d.data().upiId;
+        }
+        
+        // Deposit Logic
+         document.getElementById('submitRechargeBtn').addEventListener('click', async () => {
+            const amt = parseFloat(document.getElementById('amountInput').value);
+            const utr = document.getElementById('utrInput').value;
+            if(!amt || !utr) return;
+            
+            await addDoc(collection(db, "deposits"), {
+                userId: currentUser.uid,
+                userEmail: currentUser.email,
+                amount: amt,
+                utr: utr,
+                status: 'pending',
+                timestamp: new Date()
+            });
+            alert("Submitted!");
+            closeModal('rechargeModal');
+        });
+
+        // Withdraw Stub
+        window.openWithdrawModal = () => alert("Please bind Bank Account in Profile first.");
+        
+    </script>
+</body>
+</html>

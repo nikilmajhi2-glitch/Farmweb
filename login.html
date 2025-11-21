@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Farm Wealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-green-50 min-h-screen flex items-center justify-center">
+
+    <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl font-bold text-green-700">Farm Wealth</h1>
+            <p class="text-gray-500">Grow your fortune today</p>
+        </div>
+
+        <div class="flex mb-6 border-b">
+            <button id="tab-login" class="flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold" onclick="switchTab('login')">Login</button>
+            <button id="tab-register" class="flex-1 py-2 text-gray-500" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <input type="email" id="loginEmail" placeholder="Email Address" class="w-full p-3 border rounded bg-gray-50" required>
+            <input type="password" id="loginPass" placeholder="Password" class="w-full p-3 border rounded bg-gray-50" required>
+            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">LOGIN</button>
+        </form>
+
+        <form id="registerForm" class="hidden space-y-4">
+            <input type="email" id="regEmail" placeholder="Email Address" class="w-full p-3 border rounded bg-gray-50" required>
+            <input type="password" id="regPass" placeholder="Password" class="w-full p-3 border rounded bg-gray-50" required>
+            <input type="text" id="referralCode" placeholder="Referral Code (Optional)" class="w-full p-3 border rounded bg-gray-50">
+            <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">CREATE ACCOUNT</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // YOUR CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
+            authDomain: "rupeedesk7.firebaseapp.com",
+            projectId: "rupeedesk7",
+            storageBucket: "rupeedesk7.firebasestorage.app",
+            messagingSenderId: "1013963357851",
+            appId: "1:1013963357851:android:89d07511ca0da5fded503e"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Register Logic
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPass').value;
+            const refCode = document.getElementById('referralCode').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                // Create User Doc in Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    email: email,
+                    balance: 0, // Start with 0
+                    referralCode: user.uid.substring(0, 6).toUpperCase(), // Simple unique code
+                    referredBy: refCode || null,
+                    createdAt: new Date()
+                });
+
+                alert("Account Created! Please Login.");
+                window.location.reload();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        // Login Logic
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPass').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                window.location.href = "index.html";
+            } catch (error) {
+                alert("Login failed: " + error.message);
+            }
+        });
+
+        // Tab Switcher
+        window.switchTab = (tab) => {
+            if(tab === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('tab-login').className = "flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold";
+                document.getElementById('tab-register').className = "flex-1 py-2 text-gray-500";
+            } else {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+                document.getElementById('tab-login').className = "flex-1 py-2 text-gray-500";
+                document.getElementById('tab-register').className = "flex-1 py-2 border-b-2 border-green-600 text-green-700 font-bold";
+            }
+        }
+    </script>
+</body>
+</html>
