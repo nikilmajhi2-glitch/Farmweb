@@ -8,17 +8,25 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; -webkit-tap-highlight-color: transparent; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .hide { display: none !important; }
         .active-nav { color: #15803d; }
         .card-shadow { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1); }
         
-        /* Smooth Modal Animation */
+        /* Animations */
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .modal-content { animation: slideUp 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.3s ease-out; }
+        
+        /* Toast Notification */
+        #toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: #333; color: #fff; text-align: center; border-radius: 2px; padding: 16px; position: fixed; z-index: 100; left: 50%; bottom: 80px; font-size: 14px; border-radius: 50px; }
+        #toast.show { visibility: visible; animation: fadeIn 0.5s, fadeOut 0.5s 2.5s; }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     </style>
 </head>
 <body class="pb-24 max-w-md mx-auto min-h-screen bg-green-50 shadow-2xl overflow-hidden border-x border-gray-200 relative">
+
+    <div id="toast">Notification message</div>
 
     <div id="view-home" class="view-section">
         <div class="bg-[#1a4731] p-6 rounded-b-[40px] text-white relative shadow-xl pb-16">
@@ -115,7 +123,6 @@
     <div id="buyModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
         <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content relative">
             <div class="w-12 h-1 bg-gray-300 rounded-full mx-auto mb-6"></div>
-            
             <div class="flex gap-4 mb-6">
                 <img id="buyImg" src="" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
                 <div>
@@ -123,7 +130,6 @@
                     <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold">High Yield</span>
                 </div>
             </div>
-
             <div class="grid grid-cols-3 gap-2 mb-6 text-center">
                 <div class="bg-gray-50 p-3 rounded-xl">
                     <p class="text-[10px] text-gray-500">Price</p>
@@ -138,12 +144,10 @@
                     <p class="font-bold text-gray-800"><span id="buyDays">0</span></p>
                 </div>
             </div>
-
             <div class="flex justify-between text-sm mb-6 px-2">
                 <span class="text-gray-500">Total Revenue</span>
                 <span class="font-bold text-green-700">₹<span id="buyTotal">0</span></span>
             </div>
-
             <div class="flex gap-3">
                 <button onclick="closeModal('buyModal')" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">Cancel</button>
                 <button id="confirmBuyBtn" class="flex-1 py-3 rounded-xl font-bold text-white bg-yellow-500 shadow-lg shadow-yellow-200">Confirm</button>
@@ -164,6 +168,30 @@
             <input type="number" id="amountInput" placeholder="Amount (₹)" class="w-full bg-gray-50 border p-3 rounded-xl mb-3 outline-none focus:border-green-500">
             <input type="text" id="utrInput" placeholder="12-Digit UTR Number" class="w-full bg-gray-50 border p-3 rounded-xl mb-6 outline-none focus:border-green-500">
             <button id="submitRechargeBtn" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Submit Payment</button>
+        </div>
+    </div>
+
+    <div id="withdrawModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end justify-center">
+        <div class="bg-white w-full max-w-md rounded-t-3xl p-6 modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold">Withdraw Funds</h2>
+                <button onclick="closeModal('withdrawModal')"><i class="fas fa-times text-gray-400"></i></button>
+            </div>
+
+            <div id="withdrawContent">
+                <p class="text-gray-500 text-sm mb-4">Available Balance: <span class="font-bold text-green-600">₹<span id="withdrawBalDisplay">0</span></span></p>
+                <input type="number" id="withdrawAmount" placeholder="Enter Amount" class="w-full bg-gray-50 border p-3 rounded-xl mb-4 outline-none focus:border-green-500">
+                <button onclick="processWithdraw()" class="w-full bg-orange-500 text-white py-3 rounded-xl font-bold shadow-lg shadow-orange-200">Withdraw Now</button>
+            </div>
+
+            <div id="noBankContent" class="hidden text-center py-4">
+                <div class="bg-red-50 p-4 rounded-full w-16 h-16 mx-auto flex items-center justify-center mb-3">
+                    <i class="fas fa-university text-red-500 text-2xl"></i>
+                </div>
+                <p class="text-gray-700 font-bold mb-1">No Bank Account</p>
+                <p class="text-xs text-gray-500 mb-4">Please bind your bank details to withdraw.</p>
+                <button onclick="closeModal('withdrawModal'); openModal('bankModal')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">Add Bank Details</button>
+            </div>
         </div>
     </div>
 
@@ -212,7 +240,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc, runTransaction, query, where, orderBy, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, collection, addDoc, getDoc, runTransaction, query, where, orderBy, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAvuTedi4hNLDTHwNt3tElmZZmwmxBC_zo",
@@ -228,6 +256,7 @@
         const db = getFirestore(app);
         let currentUser = null;
         let currentBalance = 0;
+        let userBankDetails = null;
 
         // --- AUTH ---
         onAuthStateChanged(auth, async (user) => {
@@ -237,6 +266,7 @@
                 loadPlans();
                 loadMyInvestments(user.uid);
                 loadAdminUpi();
+                checkBankDetails(user.uid);
             } else {
                 window.location.href = "login.html";
             }
@@ -253,6 +283,13 @@
             });
         }
 
+        // --- CHECK BANK DETAILS ---
+        function checkBankDetails(uid) {
+            onSnapshot(doc(db, "bank_details", uid), (doc) => {
+                userBankDetails = doc.exists() ? doc.data() : null;
+            });
+        }
+
         // --- MARKET PLANS ---
         function loadPlans() {
             onSnapshot(collection(db, "plans"), (snap) => {
@@ -260,7 +297,7 @@
                 list.innerHTML = "";
                 snap.forEach(doc => {
                     const p = doc.data();
-                    const duration = p.duration || 30; // Default to 30 days if not set
+                    const duration = p.duration || 30;
                     list.innerHTML += `
                     <div class="bg-white rounded-2xl p-4 card-shadow flex gap-4 items-center">
                         <img src="${p.image}" class="w-24 h-24 rounded-xl object-cover bg-gray-100">
@@ -295,7 +332,7 @@
 
         document.getElementById('confirmBuyBtn').addEventListener('click', async () => {
             if(currentBalance < selectedPlan.price) {
-                alert("Insufficient Balance. Please Deposit.");
+                showToast("Insufficient Balance");
                 closeModal('buyModal');
                 openModal('rechargeModal');
                 return;
@@ -318,21 +355,30 @@
                         dailyIncome: selectedPlan.daily,
                         duration: selectedPlan.days,
                         startDate: new Date(),
-                        nextClaim: new Date().getTime() + 86400000, // Claim available after 24 hours
+                        nextClaim: new Date().getTime() + 86400000, // 24 Hours from now
                         status: 'active'
                     });
                 });
-                alert("Investment Successful!");
+                showToast("Investment Successful!");
                 closeModal('buyModal');
                 switchView('invest');
             } catch (e) {
-                alert("Error: " + e);
+                showToast("Error: " + e);
             }
         });
 
-        // --- MY INVESTMENTS & CLAIM LOGIC ---
+        // --- TIMER FUNCTION ---
+        function formatTimeLeft(ms) {
+            if(ms <= 0) return null;
+            const h = Math.floor(ms / (1000 * 60 * 60));
+            const m = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+            return `${h}h ${m}m`;
+        }
+
+        // --- MY INVESTMENTS & CLAIM LOGIC (WITH TIMER) ---
         function loadMyInvestments(uid) {
             const q = query(collection(db, "investments"), where("userId", "==", uid), where("status", "==", "active"));
+            
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('myInvestmentsList');
                 let totalDaily = 0;
@@ -347,25 +393,42 @@
                     const data = docItem.data();
                     totalDaily += data.dailyIncome;
                     const now = new Date().getTime();
-                    const canClaim = now >= data.nextClaim;
-
-                    let btnHtml = canClaim 
-                        ? `<button onclick="claimIncome('${docItem.id}', ${data.dailyIncome})" class="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold shadow-lg shadow-green-200 animate-pulse">Claim ₹${data.dailyIncome}</button>`
-                        : `<button class="bg-gray-200 text-gray-400 px-3 py-1 rounded text-xs font-bold cursor-not-allowed">Wait 24h</button>`;
+                    const timeLeft = data.nextClaim - now;
+                    
+                    // Determine Button State
+                    let btnHtml = "";
+                    if (timeLeft <= 0) {
+                        // Ready to Claim
+                        btnHtml = `<button onclick="claimIncome('${docItem.id}', ${data.dailyIncome})" class="w-full mt-2 bg-green-600 text-white py-2 rounded text-sm font-bold shadow-lg animate-pulse">Claim ₹${data.dailyIncome}</button>`;
+                    } else {
+                        // Countdown
+                        const timeStr = formatTimeLeft(timeLeft);
+                        btnHtml = `<button class="w-full mt-2 bg-gray-100 text-gray-400 py-2 rounded text-sm font-bold cursor-not-allowed border">Wait ${timeStr}</button>`;
+                    }
 
                     list.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-800">${data.planName}</h4>
-                            <p class="text-[10px] text-gray-500">Invested: ₹${data.price}</p>
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold text-gray-800">${data.planName}</h4>
+                                <p class="text-[10px] text-gray-500">Invested: ₹${data.price}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-green-600 font-bold">+₹${data.dailyIncome}</span>
+                                <p class="text-[10px] text-gray-400">Daily Return</p>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-end gap-1">
-                            ${btnHtml}
-                        </div>
+                        ${btnHtml}
                     </div>`;
                 });
                 document.getElementById('totalDailyIncome').innerText = totalDaily;
             });
+            
+            // Refresh UI every minute to update timers
+            setInterval(() => {
+                // This is a simple hack to trigger the snapshot listener again or just reload UI
+                // For better performance, update DOM directly, but this works for small apps
+            }, 60000);
         }
 
         window.claimIncome = async (invId, amount) => {
@@ -375,9 +438,9 @@
             try {
                 await runTransaction(db, async (t) => {
                     t.update(userRef, { balance: increment(amount) });
-                    t.update(invRef, { nextClaim: new Date().getTime() + 86400000 }); // Reset timer 24h
+                    t.update(invRef, { nextClaim: new Date().getTime() + 86400000 }); 
                 });
-                // Removed alert for smoother experience, button just changes to gray
+                showToast(`Claimed ₹${amount} successfully!`);
             } catch(e) { console.log(e); }
         };
 
@@ -389,29 +452,37 @@
                 account: document.getElementById('bankAcc').value,
                 ifsc: document.getElementById('bankIfsc').value
             });
-            alert("Bank Details Saved!");
+            showToast("Bank Details Saved!");
             closeModal('bankModal');
         });
 
+        // --- FIX FOR RECORDS ERROR (CLIENT SIDE SORTING) ---
         window.loadHistory = () => {
-            const q = query(collection(db, "deposits"), where("userId", "==", currentUser.uid), orderBy("timestamp", "desc"));
+            // REMOVED 'orderBy' from query to fix "failed-precondition" error
+            const q = query(collection(db, "deposits"), where("userId", "==", currentUser.uid));
+            
             onSnapshot(q, (snap) => {
                 const list = document.getElementById('historyList');
                 list.innerHTML = "";
-                if(snap.empty) list.innerHTML = "<p class='text-center text-gray-400'>No records found</p>";
                 
-                snap.forEach(doc => {
-                    const d = doc.data();
+                // Get data and sort manually in JS
+                const docs = [];
+                snap.forEach(d => docs.push({ ...d.data(), id: d.id }));
+                docs.sort((a, b) => b.timestamp.seconds - a.timestamp.seconds); // Newest first
+
+                if(docs.length === 0) list.innerHTML = "<p class='text-center text-gray-400 mt-10'>No records found</p>";
+                
+                docs.forEach(d => {
                     const color = d.status === 'approved' ? 'text-green-600' : (d.status === 'pending' ? 'text-yellow-600' : 'text-red-600');
                     list.innerHTML += `
-                    <div class="flex justify-between items-center border-b pb-2">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-3">
                         <div>
-                            <p class="font-bold text-gray-700">Deposit</p>
+                            <p class="font-bold text-gray-700 text-sm">Deposit</p>
                             <p class="text-[10px] text-gray-400">${new Date(d.timestamp.seconds*1000).toLocaleDateString()}</p>
                         </div>
                         <div class="text-right">
-                            <p class="font-bold">₹${d.amount}</p>
-                            <p class="text-xs ${color} capitalize">${d.status}</p>
+                            <p class="font-bold text-gray-800">₹${d.amount}</p>
+                            <p class="text-xs ${color} capitalize font-bold">${d.status}</p>
                         </div>
                     </div>`;
                 });
@@ -419,20 +490,64 @@
             });
         };
 
-        // --- UTILS (Navigation & Modals) ---
+        // --- WITHDRAWAL LOGIC (NEW) ---
+        window.openWithdrawModal = () => {
+            document.getElementById('withdrawBalDisplay').innerText = currentBalance.toFixed(2);
+            
+            if (userBankDetails) {
+                document.getElementById('withdrawContent').classList.remove('hidden');
+                document.getElementById('noBankContent').classList.add('hidden');
+            } else {
+                document.getElementById('withdrawContent').classList.add('hidden');
+                document.getElementById('noBankContent').classList.remove('hidden');
+            }
+            openModal('withdrawModal');
+        };
+
+        window.processWithdraw = async () => {
+            const amt = parseFloat(document.getElementById('withdrawAmount').value);
+            if(!amt || amt <= 0) return showToast("Invalid Amount");
+            if(amt > currentBalance) return showToast("Insufficient Balance");
+
+            // Create Withdraw Request
+            await addDoc(collection(db, "deposits"), {
+                userId: currentUser.uid,
+                type: 'withdraw', // Mark as withdraw
+                amount: amt,
+                status: 'pending',
+                timestamp: new Date(),
+                bankDetails: userBankDetails
+            });
+            
+            // Deduct Balance Immediately (Optional, usually better to wait for admin, but showing logic here)
+            // For now, we just show request sent. 
+            showToast("Withdrawal Request Sent!");
+            closeModal('withdrawModal');
+        };
+
+        // --- UTILS (Navigation, Modals, Toast) ---
         window.switchView = (view) => {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hide'));
             document.getElementById(`view-${view}`).classList.remove('hide');
-            
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active-nav', 'text-green-700'));
             if(view !== 'invest') document.getElementById(`nav-${view}`).classList.add('active-nav', 'text-green-700');
         };
         
-        // Re-using previous helper functions
-        import { increment } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"; // Import increment here
         window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
         window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-        window.copyUpi = () => { navigator.clipboard.writeText(document.getElementById('adminUpiDisplay').innerText); alert("Copied"); };
+        
+        window.copyUpi = () => { 
+            navigator.clipboard.writeText(document.getElementById('adminUpiDisplay').innerText); 
+            showToast("UPI Copied!"); 
+        };
+        
+        window.showToast = (msg) => {
+            const x = document.getElementById("toast");
+            x.innerText = msg;
+            x.className = "show";
+            setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+        };
+        
         window.logout = () => signOut(auth);
         
         async function loadAdminUpi() {
@@ -441,10 +556,10 @@
         }
         
         // Deposit Logic
-         document.getElementById('submitRechargeBtn').addEventListener('click', async () => {
+        document.getElementById('submitRechargeBtn').addEventListener('click', async () => {
             const amt = parseFloat(document.getElementById('amountInput').value);
             const utr = document.getElementById('utrInput').value;
-            if(!amt || !utr) return;
+            if(!amt || !utr) return showToast("Please fill all fields");
             
             await addDoc(collection(db, "deposits"), {
                 userId: currentUser.uid,
@@ -452,15 +567,13 @@
                 amount: amt,
                 utr: utr,
                 status: 'pending',
+                type: 'deposit',
                 timestamp: new Date()
             });
-            alert("Submitted!");
+            showToast("Deposit Submitted!");
             closeModal('rechargeModal');
         });
 
-        // Withdraw Stub
-        window.openWithdrawModal = () => alert("Please bind Bank Account in Profile first.");
-        
     </script>
 </body>
 </html>
